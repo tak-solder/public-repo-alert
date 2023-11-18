@@ -1,6 +1,0 @@
-{
-  "manifest_version": 3,
-  "name": "Public Repo Alert",
-  "version": "0.0.1",
-  "action": { "default_popup": "index.html" }
-}
