@@ -21,7 +21,6 @@ export default defineManifest(async (env: ConfigEnv) => ({
   version: `${major}.${minor}.${patch}.${label}`,
   // semver is OK in "version_name"
   version_name: version,
-  action: { default_popup: 'index.html' },
   content_scripts: [
     {
       matches: ["https://github.com/*"],
