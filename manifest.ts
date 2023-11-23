@@ -13,10 +13,7 @@ const [major, minor, patch, label = '0'] = version
 
 export default defineManifest(async (env: ConfigEnv) => ({
   manifest_version: 3,
-  name:
-    env.mode === 'staging'
-      ? '[INTERNAL] Public Repo Alert'
-      : 'Public Repo Alert',
+  name: 'GitHub Public Repo Alert',
   // up to four numbers separated by dots
   version: `${major}.${minor}.${patch}.${label}`,
   // semver is OK in "version_name"
