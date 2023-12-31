@@ -14,7 +14,6 @@ const octolyticsKeyToMetaName: Record<keyof Octolytics, string> = {
 const octolyticsMetaNames = Object.values(octolyticsKeyToMetaName);
 
 const getOctolytics = () => {
-  console.log('getOctolytics');
   const octolyticsTags = Array.from(document.querySelectorAll('meta[name*=octolytics-]'));
   const octolyticsMap = new Map(octolyticsTags.map(octolytics => [octolytics.getAttribute('name'), octolytics.getAttribute('content')]));
 
@@ -83,7 +82,6 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
       attributeFilter: ['value']
     }
   );
-  console.log(JSON.stringify(octolytics, null, 2));
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}
