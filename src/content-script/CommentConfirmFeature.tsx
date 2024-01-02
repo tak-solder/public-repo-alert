@@ -41,7 +41,7 @@ const addConfirmListener = (form: HTMLFormElement) => {
   }
 
   form.addEventListener('submit', (e) => {
-    if (!confirm('Do you want to comment to public repository?')) {
+    if (!confirm('Are you sure you post comment to public repository?')) {
       e.stopPropagation();
       e.preventDefault();
     }
