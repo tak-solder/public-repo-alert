@@ -120,11 +120,14 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
       needShowAlert,
       isLoaded,
     };
-  }, [metaOctorytics.repositoryName, metaOctorytics.repositoryIsPublic, ignoreRepositoryRegExp]);
+  }, [metaOctorytics, ignoreRepositoryRegExp]);
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}
   </OctolyticsContext.Provider>;
 }
 
-export const useOctolytics: () => Octolytics = () => useContext(OctolyticsContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export const useOctolytics: () => Octolytics = () => {
+  return useContext(OctolyticsContext);
+};
