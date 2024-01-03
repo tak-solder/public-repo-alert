@@ -1,8 +1,10 @@
-import {createContext, FC, ReactNode, useContext, useMemo, useState} from "react";
+import {createContext, FC, ReactNode, useContext, useEffect, useMemo, useState} from "react";
 import {useMutationObserver} from "ahooks";
+import {Config, loadConfig} from "../contig/config.ts";
 
 export type Octolytics = MetaOctolytics &{
-  needShowAlert?: boolean;
+  needShowAlert: boolean;
+  isLoaded: boolean;
 };
 
 type MetaOctolytics = {
@@ -32,7 +34,10 @@ const getMetaOctolytics = () => {
   return octolytics;
 }
 
-const OctolyticsContext = createContext<Octolytics>({});
+const OctolyticsContext = createContext<Octolytics>({
+  needShowAlert: false,
+  isLoaded: false,
+});
 
 type Props = {
   children: ReactNode;
@@ -48,6 +53,21 @@ const isOctolyticsMetaTag = (node: HTMLElement) => {
 
 export const OctolyticsProvider: FC<Props> = ({children}) => {
   const [metaOctorytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
+  const [config, setConfig] = useState<Config|undefined>();
+  const ignoreRepositoryRegExp: RegExp[]|undefined = useMemo(() => {
+    if (!config) {
+      return undefined;
+    }
+
+    return config.ignoreRepositoryPatterns.map(pattern => new RegExp(pattern, 'i'));
+  }, [config]);
+
+
+  useEffect(() => {
+    (async () => {
+      setConfig(await loadConfig())
+    })()
+  }, []);
 
   useMutationObserver(
     (mutations) => {
@@ -88,11 +108,19 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   );
 
   const octolytics: Octolytics = useMemo<Octolytics>(() => {
+    const isLoaded = ignoreRepositoryRegExp === undefined;
+    let needShowAlert = false;
+    if (isLoaded && metaOctorytics.repositoryIsPublic) {
+      needShowAlert = !ignoreRepositoryRegExp!.find(regexp => {
+        return regexp.test(metaOctorytics.repositoryName!)
+      })
+    }
     return {
       ...metaOctorytics,
-      needShowAlert: !!metaOctorytics.repositoryIsPublic,
+      needShowAlert,
+      isLoaded,
     };
-  }, [metaOctorytics.repositoryName, metaOctorytics.repositoryIsPublic]);
+  }, [metaOctorytics.repositoryName, metaOctorytics.repositoryIsPublic, ignoreRepositoryRegExp]);
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}

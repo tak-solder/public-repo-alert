@@ -12,8 +12,8 @@ const OBSERVE_FORM_SELECTOR = [
 ].join(',');
 
 export const PublicRepositoryFormObserver: React.FC = () => {
-  const {needShowAlert} = useOctolytics();
-  if (!needShowAlert) {
+  const {needShowAlert, isLoaded} = useOctolytics();
+  if (!isLoaded || !needShowAlert) {
     return null;
   }
 
