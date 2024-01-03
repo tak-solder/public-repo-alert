@@ -1,4 +1,4 @@
-import React, {useMemo} from "react";
+import React from "react";
 import {useMutationObserver} from "ahooks";
 import {useOctolytics} from "./octolytics.tsx";
 
@@ -6,14 +6,11 @@ const COMMENT_CONFIRM_FEATURE_FORM_SELECTOR = 'form.js-new-comment-form';
 const COMMENT_CONFIRM_FEATURE_DATA_ATTRIBUTE = 'publicRepoAlertCommentConfirmFeature';
 
 export const PublicRepositoryObserveFeature: React.FC = () => {
-  const {repositoryName, repositoryIsPublic} = useOctolytics();
-  const needObserve = useMemo<boolean>(() => {
-    return !!repositoryIsPublic;
-  }, [repositoryName, repositoryIsPublic]);
-
-  if (!needObserve) {
+  const {needShowAlert} = useOctolytics();
+  if (!needShowAlert) {
     return null;
   }
+
   return (
     <>
       <CommentConfirmFeature />

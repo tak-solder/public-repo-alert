@@ -8,7 +8,7 @@ export const BottomNotification: FC = () => {
   const [wrapperHeight, setWrapperHeight] = useState<number>(0);
   const octolytics = useOctolytics()
 
-  const needShow = !hidden && octolytics.repositoryIsPublic;
+  const needShow = !hidden && octolytics.needShowAlert;
 
   useEffect(() => {
     const height = fixedDivRef.current?.clientHeight ?? 0;
