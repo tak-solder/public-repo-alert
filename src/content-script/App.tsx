@@ -1,11 +1,11 @@
 import React from "react";
 import {BottomNotification} from "./BottomNotification.tsx";
 import {OctolyticsProvider} from "./octolytics.tsx";
-import {CommentConfirmFeature} from "./CommentConfirmFeature.tsx";
+import {PublicRepositoryObserveFeature} from "./PublicRepositoryObserveFeature.tsx";
 
 export const App: React.FC = () => (
   <OctolyticsProvider>
-    <CommentConfirmFeature/>
+    <PublicRepositoryObserveFeature/>
     <BottomNotification />
   </OctolyticsProvider>
 );
