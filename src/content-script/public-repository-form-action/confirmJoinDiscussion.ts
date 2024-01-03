@@ -12,7 +12,7 @@ export const confirmJoinDiscussion = (form: HTMLFormElement) => {
   // 警告文を表示する
   const wrapper = document.createElement('div');
   wrapper.innerHTML = `
-  <div class="flash flash-warn˚ my-3 d-flex flex-justify-between flex-items-center">
+  <div class="flash flash-warn my-3 d-flex flex-justify-between flex-items-center">
     <div>
         <strong>Are you sure you want to join in public discussion?</strong>
     </div>
