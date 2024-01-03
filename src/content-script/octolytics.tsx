@@ -1,23 +1,27 @@
-import {createContext, FC, ReactNode, useContext, useState} from "react";
+import {createContext, FC, ReactNode, useContext, useMemo, useState} from "react";
 import {useMutationObserver} from "ahooks";
 
-export type Octolytics = {
+export type Octolytics = MetaOctolytics &{
+  needShowAlert?: boolean;
+};
+
+type MetaOctolytics = {
   repositoryName?: string;
   repositoryIsPublic?: boolean;
 };
 
-const octolyticsKeyToMetaName: Record<keyof Octolytics, string> = {
+const octolyticsKeyToMetaName: Record<keyof MetaOctolytics, string> = {
   repositoryName: 'octolytics-dimension-repository_nwo',
   repositoryIsPublic: 'octolytics-dimension-repository_public',
 } as const;
 
 const octolyticsMetaNames = Object.values(octolyticsKeyToMetaName);
 
-const getOctolytics = () => {
+const getMetaOctolytics = () => {
   const octolyticsTags = Array.from(document.querySelectorAll('meta[name*=octolytics-]'));
   const octolyticsMap = new Map(octolyticsTags.map(octolytics => [octolytics.getAttribute('name'), octolytics.getAttribute('content')]));
 
-  const octolytics: Octolytics = {};
+  const octolytics: MetaOctolytics = {};
   if (octolyticsMap.has(octolyticsKeyToMetaName.repositoryName)) {
     octolytics.repositoryName = octolyticsMap.get(octolyticsKeyToMetaName.repositoryName) as string;
   }
@@ -43,7 +47,7 @@ const isOctolyticsMetaTag = (node: HTMLElement) => {
 }
 
 export const OctolyticsProvider: FC<Props> = ({children}) => {
-  const [octolytics, setOctolytics] = useState<Octolytics>(getOctolytics);
+  const [metaOctorytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
 
   useMutationObserver(
     (mutations) => {
@@ -72,7 +76,7 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
 
       // mutationListのaddNodesまたはremovedNodesにOctolyticsで使っているmetaタグが含まれていたら再取得する
       if (addedTagExists || removedTagExists) {
-        setOctolytics(getOctolytics());
+        setMetaOctolytics(getMetaOctolytics());
       }
     },
     document.querySelector('head') as HTMLHeadElement,
@@ -82,6 +86,13 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
       attributeFilter: ['value']
     }
   );
+
+  const octolytics: Octolytics = useMemo<Octolytics>(() => {
+    return {
+      ...metaOctorytics,
+      needShowAlert: !!metaOctorytics.repositoryIsPublic,
+    };
+  }, [metaOctorytics.repositoryName, metaOctorytics.repositoryIsPublic]);
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}
