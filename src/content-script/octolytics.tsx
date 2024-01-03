@@ -1,4 +1,4 @@
-import {createContext, FC, ReactNode, useContext, useState} from "react";
+import {createContext, FC, ReactNode, useContext, useMemo, useState} from "react";
 import {useMutationObserver} from "ahooks";
 
 export type Octolytics = {
@@ -83,7 +83,9 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
     }
   );
 
-  return <OctolyticsContext.Provider value={octolytics}>
+  const memoizedOctolytics = useMemo(() => octolytics, [octolytics.repositoryName, octolytics.repositoryIsPublic]);
+
+  return <OctolyticsContext.Provider value={memoizedOctolytics}>
     {children}
   </OctolyticsContext.Provider>;
 }
