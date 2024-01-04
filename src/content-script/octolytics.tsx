@@ -108,7 +108,7 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   );
 
   const octolytics: Octolytics = useMemo<Octolytics>(() => {
-    const isLoaded = ignoreRepositoryRegExp === undefined;
+    const isLoaded = ignoreRepositoryRegExp !== undefined;
     let needShowAlert = false;
     if (isLoaded && metaOctorytics.repositoryIsPublic) {
       needShowAlert = !ignoreRepositoryRegExp!.find(regexp => {

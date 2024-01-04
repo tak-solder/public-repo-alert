@@ -3,14 +3,16 @@ export type Config = {
 };
 
 export const loadConfig = async (): Promise<Config> => {
-  const config = await chrome.storage.local.get('config')
-  if (typeof config.config !== 'object') {
+  const {config} = await chrome.storage.local.get();
+  if (typeof config !== 'object') {
     return {
       ignoreRepositoryPatterns: [],
     }
   }
 
-  return config.config;
+  return {
+    ignoreRepositoryPatterns: config.ignoreRepositoryPatterns || [],
+  };
 }
 
 export const saveConfig = async (config: Config): Promise<void> => {
