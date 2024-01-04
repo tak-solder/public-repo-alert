@@ -1,7 +1,6 @@
 import { defineManifest } from '@crxjs/vite-plugin'
 // @ts-ignore
 import packageJson from './package.json'
-import {ConfigEnv} from "vite";
 const { version } = packageJson
 
 // Convert from Semver (example: 0.1.0-beta6)
@@ -11,7 +10,7 @@ const [major, minor, patch, label = '0'] = version
   // split into version parts
   .split(/[.-]/)
 
-export default defineManifest(async (env: ConfigEnv) => ({
+export default defineManifest(async () => ({
   manifest_version: 3,
   name: 'GitHub Public Repo Alert',
   // up to four numbers separated by dots
@@ -23,5 +22,12 @@ export default defineManifest(async (env: ConfigEnv) => ({
       matches: ["https://github.com/*"],
       js: ["src/content-script/main.tsx"]
     },
+  ],
+  options_ui: {
+    page: "src/options/index.html",
+    open_in_tab: true,
+  },
+  permissions: [
+    "storage",
   ],
 }))
