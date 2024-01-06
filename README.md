@@ -1,2 +1,5 @@
 # GitHub Public Repo Alert
-Chrome extension that show notifications when you are viewing a public repository
+This extension aims to prevent accidentally posting comments on GitHub public repositories.
+
+1. Display a warning message when viewing a public repository.
+2. Show the discussion form only when you want to comment on the public repository.

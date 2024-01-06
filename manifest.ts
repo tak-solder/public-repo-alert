@@ -17,6 +17,11 @@ export default defineManifest(async () => ({
   version: `${major}.${minor}.${patch}.${label}`,
   // semver is OK in "version_name"
   version_name: version,
+  icons: {
+    32: 'icons/32.png',
+    48: 'icons/48.png',
+    128: 'icons/128.png',
+  },
   content_scripts: [
     {
       matches: ["https://github.com/*"],
