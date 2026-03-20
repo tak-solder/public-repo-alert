@@ -1,6 +1,6 @@
 import React from "react";
 import {Box, Button, FormControl, Heading, Textarea} from "@primer/react";
-import {Config, saveConfig} from "../contig/config.ts";
+import {Config, saveConfig} from "@/utils/config";
 
 type Props = {
   config: Config;

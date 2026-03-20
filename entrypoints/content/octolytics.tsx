@@ -1,6 +1,6 @@
 import {createContext, FC, ReactNode, useContext, useEffect, useMemo, useState} from "react";
-import {useMutationObserver} from "ahooks";
-import {Config, loadConfig} from "../contig/config.ts";
+import {useMutationObserver} from "@/hooks/useMutationObserver";
+import {Config, loadConfig} from "@/utils/config";
 
 export type Octolytics = MetaOctolytics &{
   needShowAlert: boolean;
@@ -127,7 +127,6 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   </OctolyticsContext.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useOctolytics: () => Octolytics = () => {
   return useContext(OctolyticsContext);
 };
