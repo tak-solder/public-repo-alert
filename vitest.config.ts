@@ -3,4 +3,8 @@ import { WxtVitest } from "wxt/testing/vitest-plugin";
 
 export default defineConfig({
   plugins: [await WxtVitest()],
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./vitest.setup.ts"],
+  },
 });

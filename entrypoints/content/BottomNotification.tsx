@@ -3,10 +3,20 @@ import {useBoolean} from "@/hooks/useBoolean";
 import {useOctolytics} from "./octolytics";
 
 export const BottomNotification: FC = () => {
-  const [hidden, {setTrue: handleCloseButton}] = useBoolean(false)
+  const [hidden, {setTrue: handleCloseButton, setFalse: resetHidden}] = useBoolean(false)
   const fixedDivRef = useRef<HTMLDivElement>(null);
   const [wrapperHeight, setWrapperHeight] = useState<number>(0);
+  const prevRepositoryNameRef = useRef<string | undefined>(undefined);
   const octolytics = useOctolytics()
+
+  // 別リポジトリに遷移した場合、閉じた状態をリセットする
+  useEffect(() => {
+    const prevName = prevRepositoryNameRef.current;
+    prevRepositoryNameRef.current = octolytics.repositoryName;
+    if (prevName !== undefined && prevName !== octolytics.repositoryName) {
+      resetHidden();
+    }
+  }, [octolytics.repositoryName, resetHidden]);
 
   const needShow = !hidden && octolytics.needShowAlert;
 
