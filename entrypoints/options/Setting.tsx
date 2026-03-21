@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Button, FormControl, Heading, Textarea} from "@primer/react";
+import {Button, FormControl, Heading, Textarea} from "@primer/react";
 import {Config, saveConfig} from "@/utils/config";
 
 type Props = {
@@ -24,32 +24,32 @@ export const Setting: React.FC<Props> = ({config}) => {
   };
 
   return (
-    <Box sx={{maxWidth: '720px', mx: 'auto', px: 4}}>
+    <div style={{maxWidth: '720px', margin: '0 auto', padding: '0 16px'}}>
       <Heading>Public repo Alert Settings</Heading>
       <form onSubmit={handleSubmit}>
         <FormControl id="ignore-repository-input">
-          <FormControl.Label sx={{fontSize: "x-large"}}>
+          <FormControl.Label style={{fontSize: "x-large"}}>
               Ignore Repositories
           </FormControl.Label>
-          <FormControl.Caption sx={{fontSize: "medium"}}>
+          <FormControl.Caption style={{fontSize: "medium"}}>
             Specify the repository where you want to disable this feature.<br/>
             You can specify one per line. Regular expressions can be used.
           </FormControl.Caption>
-          <Textarea sx={{height: '250px'}}
+          <Textarea style={{height: '250px'}}
                     defaultValue={config.ignoreRepositoryPatterns.join("\n")}
                     placeholder={placeholder}
                     block
           />
         </FormControl>
-        <FormControl sx={{marginTop: 3}}>
+        <FormControl style={{marginTop: '16px'}}>
           {saved ? (
-            <Button type="button" size="large" variant="primary" sx={{fontSize: "large"}} disabled>Saved</Button>
+            <Button type="button" size="large" variant="primary" style={{fontSize: "large"}} disabled>Saved</Button>
           ) : (
-            <Button type="submit" size="large" variant="primary" sx={{fontSize: "large"}}>Save</Button>
+            <Button type="submit" size="large" variant="primary" style={{fontSize: "large"}}>Save</Button>
           )}
 
         </FormControl>
       </form>
-    </Box>
+    </div>
   );
 };
