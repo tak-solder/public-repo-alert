@@ -8,6 +8,9 @@ export function useMutationObserver(
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
 
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   useEffect(() => {
     if (!target) {
       return;
@@ -16,10 +19,10 @@ export function useMutationObserver(
     const observer = new MutationObserver((...args) => {
       callbackRef.current(...args);
     });
-    observer.observe(target, options);
+    observer.observe(target, optionsRef.current);
 
     return () => {
       observer.disconnect();
     };
-  }, [target, JSON.stringify(options)]);
+  }, [target]);
 }
