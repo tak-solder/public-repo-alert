@@ -1,15 +1,9 @@
-import React from "react";
+import React, {useEffect} from "react";
 import {useMutationObserver} from "@/hooks/useMutationObserver";
 import {useOctolytics} from "./octolytics";
 import {confirmJoinDiscussion} from "./public-repository-form-action/confirmJoinDiscussion";
 
-// 以下のフォームに対して実行する
-const OBSERVE_FORM_SELECTOR = [
-  'form.js-new-comment-form',
-  'form.new_issue',
-  'form.new-pr-form',
-  'form.js-inline-comment-form',
-].join(',');
+const OBSERVE_COMPOSER_SELECTOR = '[data-testid="comment-composer"]';
 
 export const PublicRepositoryFormObserver: React.FC = () => {
   const {needShowAlert, isLoaded} = useOctolytics();
@@ -20,11 +14,26 @@ export const PublicRepositoryFormObserver: React.FC = () => {
   return <WatchingForm />;
 };
 
-const WatchingForm: React.FC = () => {
-  // 読み込み時に既に存在しているフォームに対して実行
-  document.querySelectorAll<HTMLFormElement>(OBSERVE_FORM_SELECTOR).forEach(eachFormAction);
+const scanAndIntercept = () => {
+  document.querySelectorAll<HTMLElement>(OBSERVE_COMPOSER_SELECTOR).forEach(eachComposerAction);
+};
 
-  // 追加されたフォームに対して実行
+const WatchingForm: React.FC = () => {
+  // 読み込み時に既に存在しているコンポーザーに対して実行
+  scanAndIntercept();
+
+  // turbo:load（SPA遷移）時にコンポーザーを再スキャン
+  useEffect(() => {
+    const handleTurboLoad = () => {
+      scanAndIntercept();
+    };
+    document.addEventListener('turbo:load', handleTurboLoad);
+    return () => {
+      document.removeEventListener('turbo:load', handleTurboLoad);
+    };
+  }, []);
+
+  // 動的に追加されたコンポーザーに対して実行
   useMutationObserver(
     (mutations) => {
       mutations
@@ -35,11 +44,17 @@ const WatchingForm: React.FC = () => {
                 return [];
               }
 
-              return Array.from(node.querySelectorAll<HTMLFormElement>(OBSERVE_FORM_SELECTOR))
+              // 追加されたノード自体がコンポーザーの場合と、子孫にコンポーザーがある場合の両方を検出
+              const composers: HTMLElement[] = [];
+              if (node.matches(OBSERVE_COMPOSER_SELECTOR)) {
+                composers.push(node);
+              }
+              composers.push(...Array.from(node.querySelectorAll<HTMLElement>(OBSERVE_COMPOSER_SELECTOR)));
+              return composers;
             }).flat()
         })
         .flat()
-        .forEach(eachFormAction);
+        .forEach(eachComposerAction);
     },
     document.querySelector('body') as HTMLBodyElement,
     {
@@ -51,6 +66,6 @@ const WatchingForm: React.FC = () => {
   return null;
 };
 
-const eachFormAction = (form: HTMLFormElement) => {
-  confirmJoinDiscussion(form);
+const eachComposerAction = (composer: HTMLElement) => {
+  confirmJoinDiscussion(composer);
 };
