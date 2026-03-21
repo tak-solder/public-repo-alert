@@ -1,7 +1,7 @@
 import React from "react";
-import {useMutationObserver} from "@/hooks/useMutationObserver";
-import {useOctolytics} from "./octolytics";
-import {confirmJoinDiscussion} from "./public-repository-form-action/confirmJoinDiscussion";
+import {useMutationObserver} from "ahooks";
+import {useOctolytics} from "./octolytics.tsx";
+import {confirmJoinDiscussion} from "./public-repository-form-action/confirmJoinDiscussion.ts";
 
 // 以下のフォームに対して実行する
 const OBSERVE_FORM_SELECTOR = [
