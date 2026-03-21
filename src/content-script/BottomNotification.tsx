@@ -1,6 +1,6 @@
 import {FC, useEffect, useRef, useState} from "react";
-import {useBoolean} from "@/hooks/useBoolean";
-import {useOctolytics} from "./octolytics";
+import {useBoolean} from "ahooks";
+import {useOctolytics} from "./octolytics.tsx";
 
 export const BottomNotification: FC = () => {
   const [hidden, {setTrue: handleCloseButton}] = useBoolean(false)

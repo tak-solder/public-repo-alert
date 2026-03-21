@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {ThemeProvider, BaseStyles} from '@primer/react'
-import {Config, loadConfig} from "@/utils/config";
-import {Setting} from "./Setting";
+import {Config, loadConfig} from "../contig/config.ts";
+import {Setting} from "./Setting.tsx";
 
 export const App: React.FC = () => {
   const [config, setConfig] = useState<Config | undefined>();
