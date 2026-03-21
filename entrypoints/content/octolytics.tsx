@@ -1,5 +1,4 @@
 import {createContext, FC, ReactNode, useContext, useEffect, useMemo, useState} from "react";
-import {useMutationObserver} from "@/hooks/useMutationObserver";
 import {Config, loadConfig} from "@/utils/config";
 
 export type Octolytics = MetaOctolytics &{
@@ -17,9 +16,7 @@ const octolyticsKeyToMetaName: Record<keyof MetaOctolytics, string> = {
   repositoryIsPublic: 'octolytics-dimension-repository_public',
 } as const;
 
-const octolyticsMetaNames = Object.values(octolyticsKeyToMetaName);
-
-const getMetaOctolytics = () => {
+export const getMetaOctolytics = () => {
   const octolyticsTags = Array.from(document.querySelectorAll('meta[name*=octolytics-]'));
   const octolyticsMap = new Map(octolyticsTags.map(octolytics => [octolytics.getAttribute('name'), octolytics.getAttribute('content')]));
 
@@ -43,14 +40,6 @@ type Props = {
   children: ReactNode;
 }
 
-const isOctolyticsMetaTag = (node: HTMLElement) => {
-  if (node.tagName.toLowerCase() !== 'meta') {
-    return false;
-  }
-  const name = node.getAttribute('name');
-  return name && octolyticsMetaNames.includes(name);
-}
-
 export const OctolyticsProvider: FC<Props> = ({children}) => {
   const [metaOctorytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
   const [config, setConfig] = useState<Config|undefined>();
@@ -62,50 +51,22 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
     return config.ignoreRepositoryPatterns.map(pattern => new RegExp(pattern, 'i'));
   }, [config]);
 
-
   useEffect(() => {
     (async () => {
       setConfig(await loadConfig())
     })()
   }, []);
 
-  useMutationObserver(
-    (mutations) => {
-      // 追加された要素の中にOctolyticsで使っているmetaタグが存在するか
-      const addedTagExists = !!mutations
-        .find(mutation => {
-          if (!mutation.addedNodes.length) {
-            return false;
-          }
-
-          return (Array.from(mutation.addedNodes) as HTMLElement[])
-            .find(isOctolyticsMetaTag)
-        });
-
-      // 削除された要素の中にOctolyticsで使っているmetaタグが存在するか
-      const removedTagExists = !!mutations
-        .find(mutation => {
-          if (!mutation.removedNodes.length) {
-            return false;
-          }
-
-          return (Array.from(mutation.removedNodes) as HTMLElement[])
-            .find(isOctolyticsMetaTag)
-        });
-
-
-      // mutationListのaddNodesまたはremovedNodesにOctolyticsで使っているmetaタグが含まれていたら再取得する
-      if (addedTagExists || removedTagExists) {
-        setMetaOctolytics(getMetaOctolytics());
-      }
-    },
-    document.querySelector('head') as HTMLHeadElement,
-    {
-      subtree: true,
-      childList: true,
-      attributeFilter: ['value']
-    }
-  );
+  // Turbo SPA遷移時にメタタグを再取得する
+  useEffect(() => {
+    const handleTurboLoad = () => {
+      setMetaOctolytics(getMetaOctolytics());
+    };
+    document.addEventListener('turbo:load', handleTurboLoad);
+    return () => {
+      document.removeEventListener('turbo:load', handleTurboLoad);
+    };
+  }, []);
 
   const octolytics: Octolytics = useMemo<Octolytics>(() => {
     const isLoaded = ignoreRepositoryRegExp !== undefined;
