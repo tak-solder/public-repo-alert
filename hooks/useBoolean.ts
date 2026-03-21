@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type Actions = {
   setTrue: () => void;
@@ -9,11 +9,11 @@ type Actions = {
 export function useBoolean(defaultValue = false): [boolean, Actions] {
   const [state, setState] = useState(defaultValue);
 
-  const actions: Actions = {
-    setTrue: useCallback(() => setState(true), []),
-    setFalse: useCallback(() => setState(false), []),
-    toggle: useCallback(() => setState((prev) => !prev), []),
-  };
+  const actions: Actions = useMemo(() => ({
+    setTrue: () => setState(true),
+    setFalse: () => setState(false),
+    toggle: () => setState((prev) => !prev),
+  }), []);
 
   return [state, actions];
 }
