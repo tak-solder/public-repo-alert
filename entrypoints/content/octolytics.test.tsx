@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act, cleanup } from "@testing-library/react";
-import { useContext, createContext } from "react";
+import { render, act, cleanup } from "@testing-library/react";
 import { getMetaOctolytics, OctolyticsProvider, useOctolytics } from "./octolytics";
 import type { Octolytics } from "./octolytics";
 
@@ -253,11 +252,10 @@ describe("OctolyticsProvider", () => {
     });
     mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
 
-    let value: Octolytics | undefined;
     const { unmount } = await act(async () => {
       return render(
         <OctolyticsProvider>
-          <OctolyticsConsumer onValue={(v) => (value = v)} />
+          <OctolyticsConsumer onValue={() => {}} />
         </OctolyticsProvider>,
       );
     });

@@ -41,7 +41,7 @@ type Props = {
 }
 
 export const OctolyticsProvider: FC<Props> = ({children}) => {
-  const [metaOctorytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
+  const [metaOctolytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
   const [config, setConfig] = useState<Config|undefined>();
   const ignoreRepositoryRegExp: RegExp[]|undefined = useMemo(() => {
     if (!config) {
@@ -71,17 +71,17 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   const octolytics: Octolytics = useMemo<Octolytics>(() => {
     const isLoaded = ignoreRepositoryRegExp !== undefined;
     let needShowAlert = false;
-    if (isLoaded && metaOctorytics.repositoryIsPublic) {
+    if (isLoaded && metaOctolytics.repositoryIsPublic) {
       needShowAlert = !ignoreRepositoryRegExp!.find(regexp => {
-        return regexp.test(metaOctorytics.repositoryName!)
+        return regexp.test(metaOctolytics.repositoryName!)
       })
     }
     return {
-      ...metaOctorytics,
+      ...metaOctolytics,
       needShowAlert,
       isLoaded,
     };
-  }, [metaOctorytics, ignoreRepositoryRegExp]);
+  }, [metaOctolytics, ignoreRepositoryRegExp]);
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}
