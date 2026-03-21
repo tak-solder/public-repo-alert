@@ -1,0 +1,4 @@
+{
+  "plugins": ["typescript", "react"],
+  "ignorePatterns": [".output", ".wxt", "node_modules"]
+}
