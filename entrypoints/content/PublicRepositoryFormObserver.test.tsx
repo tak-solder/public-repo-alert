@@ -36,7 +36,7 @@ describe("PublicRepositoryFormObserver", () => {
 
   it("isLoadedがfalseの場合は何もレンダリングしない", () => {
     const composer = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: false, isLoaded: false });
+    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: false });
 
     render(<PublicRepositoryFormObserver />);
 

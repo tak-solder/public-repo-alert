@@ -62,7 +62,7 @@ const WatchingForm: React.FC = () => {
         .flat()
         .forEach(eachComposerAction);
     },
-    document.querySelector('body') as HTMLBodyElement,
+    document.body,
     {
       subtree: true,
       childList: true,
