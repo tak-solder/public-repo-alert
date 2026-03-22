@@ -141,9 +141,31 @@ describe("PublicRepositoryFormObserver", () => {
     }).not.toThrow();
   });
 
-  it("旧セレクタ（form.js-new-comment-form等）に一致する要素はインターセプトしない", () => {
+  it("PRコメントフォーム（form.js-new-comment-form）をインターセプトする", () => {
     const form = document.createElement("form");
     form.classList.add("js-new-comment-form");
+    document.body.appendChild(form);
+    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+
+    render(<PublicRepositoryFormObserver />);
+
+    expect(form.style.display).toBe("none");
+  });
+
+  it("レビューコメント返信フォーム（form.js-inline-comment-form）をインターセプトする", () => {
+    const form = document.createElement("form");
+    form.classList.add("js-inline-comment-form");
+    document.body.appendChild(form);
+    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+
+    render(<PublicRepositoryFormObserver />);
+
+    expect(form.style.display).toBe("none");
+  });
+
+  it("対象外のセレクタ（form.new_issue等）はインターセプトしない", () => {
+    const form = document.createElement("form");
+    form.classList.add("new_issue");
     document.body.appendChild(form);
     mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
 

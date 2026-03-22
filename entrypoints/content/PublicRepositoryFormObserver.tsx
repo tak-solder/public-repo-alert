@@ -3,7 +3,11 @@ import {useMutationObserver} from "@/hooks/useMutationObserver";
 import {useOctolytics} from "./octolytics";
 import {confirmJoinDiscussion} from "./public-repository-form-action/confirmJoinDiscussion";
 
-const OBSERVE_COMPOSER_SELECTOR = '[data-testid="comment-composer"]';
+const OBSERVE_COMPOSER_SELECTOR = [
+  '[data-testid="comment-composer"]',
+  'form.js-new-comment-form',
+  'form.js-inline-comment-form',
+].join(',');
 
 export const PublicRepositoryFormObserver: React.FC = () => {
   const {needShowAlert, isLoaded} = useOctolytics();
