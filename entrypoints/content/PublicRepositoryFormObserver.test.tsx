@@ -123,9 +123,8 @@ describe("PublicRepositoryFormObserver", () => {
 
     render(<PublicRepositoryFormObserver />);
 
-    // SPA遷移をシミュレート: 新しいコンポーザーを追加してからturbo:loadを発火
+    // SPA遷移をシミュレート: 新しいコンポーザーを追加してからturbo:loadを発火し、新しいページのDOM読み込みを再現
     const composer = createComposer();
-    // data-attributeをクリア（新しいページのDOM）
     await act(async () => {
       document.dispatchEvent(new Event("turbo:load"));
     });

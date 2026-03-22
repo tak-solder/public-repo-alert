@@ -1,9 +1,9 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useLayoutEffect} from "react";
 import {useMutationObserver} from "@/hooks/useMutationObserver";
 import {useOctolytics} from "./octolytics";
 import {confirmJoinDiscussion} from "./public-repository-form-action/confirmJoinDiscussion";
 
-const OBSERVE_COMPOSER_SELECTOR = [
+const OBSERVE_TARGET_SELECTOR = [
   '[data-testid="comment-composer"]',
   'form.js-new-comment-form',
   'form.js-inline-comment-form',
@@ -19,12 +19,14 @@ export const PublicRepositoryFormObserver: React.FC = () => {
 };
 
 const scanAndIntercept = () => {
-  document.querySelectorAll<HTMLElement>(OBSERVE_COMPOSER_SELECTOR).forEach(eachComposerAction);
+  document.querySelectorAll<HTMLElement>(OBSERVE_TARGET_SELECTOR).forEach(eachComposerAction);
 };
 
 const WatchingForm: React.FC = () => {
-  // 読み込み時に既に存在しているコンポーザーに対して実行
-  scanAndIntercept();
+  // 読み込み時に既に存在しているコンポーザーに対して実行（ちらつき防止のためuseLayoutEffect）
+  useLayoutEffect(() => {
+    scanAndIntercept();
+  }, []);
 
   // turbo:load（SPA遷移）時にコンポーザーを再スキャン
   useEffect(() => {
@@ -50,10 +52,10 @@ const WatchingForm: React.FC = () => {
 
               // 追加されたノード自体がコンポーザーの場合と、子孫にコンポーザーがある場合の両方を検出
               const composers: HTMLElement[] = [];
-              if (node.matches(OBSERVE_COMPOSER_SELECTOR)) {
+              if (node.matches(OBSERVE_TARGET_SELECTOR)) {
                 composers.push(node);
               }
-              composers.push(...Array.from(node.querySelectorAll<HTMLElement>(OBSERVE_COMPOSER_SELECTOR)));
+              composers.push(...Array.from(node.querySelectorAll<HTMLElement>(OBSERVE_TARGET_SELECTOR)));
               return composers;
             }).flat()
         })
