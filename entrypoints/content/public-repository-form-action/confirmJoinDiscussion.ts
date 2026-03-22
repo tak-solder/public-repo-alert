@@ -1,13 +1,13 @@
 const CONFIRM_JOIN_DISCUSSION_DATA_ATTRIBUTE = 'publicRepoAlertConfirmJoinDiscussionFeature';
-export const confirmJoinDiscussion = (form: HTMLFormElement) => {
-  // formごとに1回のみ実行する
-  if (form.dataset[CONFIRM_JOIN_DISCUSSION_DATA_ATTRIBUTE] === 'true') {
+export const confirmJoinDiscussion = (composer: HTMLElement) => {
+  // コンポーザーごとに1回のみ実行する
+  if (composer.dataset[CONFIRM_JOIN_DISCUSSION_DATA_ATTRIBUTE] === 'true') {
     return;
   }
-  form.dataset[CONFIRM_JOIN_DISCUSSION_DATA_ATTRIBUTE] = 'true';
+  composer.dataset[CONFIRM_JOIN_DISCUSSION_DATA_ATTRIBUTE] = 'true';
 
-  // コメントフォームを非表示にする
-  form.style.display = 'none';
+  // コンポーザーを非表示にする
+  composer.style.display = 'none';
 
   // 警告文を表示する
   const wrapper = document.createElement('div');
@@ -19,11 +19,11 @@ export const confirmJoinDiscussion = (form: HTMLFormElement) => {
     <button type="button" class="btn">Got it.</button>
   </div>
   `;
-  form.before(wrapper);
+  composer.before(wrapper);
 
-  // 警告文のボタンを押したらコメントフォームを表示する
+  // 警告文のボタンを押したらコンポーザーを表示する
   wrapper.querySelector('button')?.addEventListener('click', () => {
-    form.style.display = '';
+    composer.style.display = '';
     wrapper.remove();
   });
 }
