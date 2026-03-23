@@ -45,6 +45,7 @@ async function renderAndWaitForLoad(onValue: (value: Octolytics) => void) {
     );
   });
   await waitFor(() => {
+    expect(value).toBeDefined();
     expect(value!.isLoaded).toBe(true);
   });
 }
