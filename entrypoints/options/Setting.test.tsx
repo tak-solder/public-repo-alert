@@ -28,6 +28,7 @@ describe("Setting", () => {
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
     vi.useRealTimers();
     cleanup();
   });

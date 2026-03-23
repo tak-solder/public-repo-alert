@@ -30,11 +30,9 @@ describe("App", () => {
   it("設定読み込み完了後にSettingが表示される", async () => {
     mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
 
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
 
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(await screen.findByRole("textbox")).toBeInTheDocument();
   });
 
   it("保存済みの除外パターンがtextareaに表示される", async () => {
@@ -42,11 +40,9 @@ describe("App", () => {
       ignoreRepositoryPatterns: ["owner/repo", "^org/"],
     });
 
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
 
-    const textarea = screen.getByRole("textbox");
+    const textarea = await screen.findByRole("textbox");
     expect(textarea).toHaveValue("owner/repo\n^org/");
   });
 });
