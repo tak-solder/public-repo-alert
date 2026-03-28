@@ -25,9 +25,9 @@ describe("PublicRepositoryFormObserver", () => {
     cleanup();
   });
 
-  it("needShowAlertがfalseの場合は何もレンダリングしない", () => {
+  it("protectFormがfalseの場合は何もレンダリングしない", () => {
     const composer = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: false, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: false, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -36,7 +36,7 @@ describe("PublicRepositoryFormObserver", () => {
 
   it("isLoadedがfalseの場合は何もレンダリングしない", () => {
     const composer = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: false });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: false });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -45,7 +45,7 @@ describe("PublicRepositoryFormObserver", () => {
 
   it("初期レンダリング時に既存のコンポーザーをインターセプトする", () => {
     const composer = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -59,7 +59,7 @@ describe("PublicRepositoryFormObserver", () => {
   it("初期レンダリング時に複数のコンポーザーを全てインターセプトする", () => {
     const composerA = createComposer();
     const composerB = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -68,7 +68,7 @@ describe("PublicRepositoryFormObserver", () => {
   });
 
   it("動的に追加されたコンポーザーをMutationObserverで検出してインターセプトする", async () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -84,7 +84,7 @@ describe("PublicRepositoryFormObserver", () => {
   });
 
   it("動的追加されたノードの子孫にあるコンポーザーも検出する", async () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -102,7 +102,7 @@ describe("PublicRepositoryFormObserver", () => {
   });
 
   it("HTMLElement以外のノード追加は無視する", async () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -119,7 +119,7 @@ describe("PublicRepositoryFormObserver", () => {
   });
 
   it("SPA遷移（turbo:load）後に新ページのコンポーザーをインターセプトする", async () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -133,7 +133,7 @@ describe("PublicRepositoryFormObserver", () => {
   });
 
   it("コンポーザーが存在しないページでもエラーにならない", () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     expect(() => {
       render(<PublicRepositoryFormObserver />);
@@ -144,7 +144,7 @@ describe("PublicRepositoryFormObserver", () => {
     const form = document.createElement("form");
     form.classList.add("js-new-comment-form");
     document.body.appendChild(form);
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -155,7 +155,7 @@ describe("PublicRepositoryFormObserver", () => {
     const form = document.createElement("form");
     form.classList.add("js-inline-comment-form");
     document.body.appendChild(form);
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
@@ -166,19 +166,19 @@ describe("PublicRepositoryFormObserver", () => {
     const form = document.createElement("form");
     form.classList.add("new_issue");
     document.body.appendChild(form);
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
 
     render(<PublicRepositoryFormObserver />);
 
     expect(form.style.display).not.toBe("none");
   });
 
-  it("needShowAlertがtrueからfalseに変わった場合にインターセプトを停止する", () => {
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+  it("protectFormがtrueからfalseに変わった場合にインターセプトを停止する", () => {
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
     const { rerender } = render(<PublicRepositoryFormObserver />);
 
-    // needShowAlertがfalseに変わる
-    mockUseOctolytics.mockReturnValue({ needShowAlert: false, isLoaded: true });
+    // protectFormがfalseに変わる
+    mockUseOctolytics.mockReturnValue({ protectForm: false, isLoaded: true });
     rerender(<PublicRepositoryFormObserver />);
 
     // 新しく追加されたコンポーザーはインターセプトされない
@@ -186,15 +186,15 @@ describe("PublicRepositoryFormObserver", () => {
     expect(newComposer.style.display).not.toBe("none");
   });
 
-  it("needShowAlertがfalseからtrueに変わった場合にインターセプトを開始する", () => {
+  it("protectFormがfalseからtrueに変わった場合にインターセプトを開始する", () => {
     const composer = createComposer();
-    mockUseOctolytics.mockReturnValue({ needShowAlert: false, isLoaded: true });
+    mockUseOctolytics.mockReturnValue({ protectForm: false, isLoaded: true });
     const { rerender } = render(<PublicRepositoryFormObserver />);
 
     expect(composer.style.display).not.toBe("none");
 
-    // needShowAlertがtrueに変わる
-    mockUseOctolytics.mockReturnValue({ needShowAlert: true, isLoaded: true });
+    // protectFormがtrueに変わる
+    mockUseOctolytics.mockReturnValue({ protectForm: true, isLoaded: true });
     rerender(<PublicRepositoryFormObserver />);
 
     expect(composer.style.display).toBe("none");

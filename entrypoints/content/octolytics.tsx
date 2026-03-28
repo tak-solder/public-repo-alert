@@ -1,8 +1,9 @@
 import {createContext, FC, ReactNode, useContext, useEffect, useMemo, useState} from "react";
-import {Config, loadConfig} from "@/utils/config";
+import {showAlertItem, protectFormItem, ignoreListItem, isIgnored} from "@/utils/storage";
 
-export type Octolytics = MetaOctolytics &{
-  needShowAlert: boolean;
+export type Octolytics = MetaOctolytics & {
+  showAlert: boolean;
+  protectForm: boolean;
   isLoaded: boolean;
 };
 
@@ -32,7 +33,8 @@ export const getMetaOctolytics = () => {
 }
 
 const OctolyticsContext = createContext<Octolytics>({
-  needShowAlert: false,
+  showAlert: false,
+  protectForm: false,
   isLoaded: false,
 });
 
@@ -40,21 +42,44 @@ type Props = {
   children: ReactNode;
 }
 
+type StorageState = {
+  showAlert: boolean;
+  protectForm: boolean;
+  ignoreList: string[];
+} | undefined;
+
 export const OctolyticsProvider: FC<Props> = ({children}) => {
   const [metaOctolytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
-  const [config, setConfig] = useState<Config|undefined>();
-  const ignoreRepositoryRegExp: RegExp[]|undefined = useMemo(() => {
-    if (!config) {
-      return undefined;
-    }
+  const [storageState, setStorageState] = useState<StorageState>();
 
-    return config.ignoreRepositoryPatterns.map(pattern => new RegExp(pattern, 'i'));
-  }, [config]);
-
+  // storageから初期値を読み込む
   useEffect(() => {
     (async () => {
-      setConfig(await loadConfig())
-    })()
+      const [showAlert, protectForm, ignoreList] = await Promise.all([
+        showAlertItem.getValue(),
+        protectFormItem.getValue(),
+        ignoreListItem.getValue(),
+      ]);
+      setStorageState({showAlert, protectForm, ignoreList});
+    })();
+  }, []);
+
+  // storage.watch()で変更を即時反映する
+  useEffect(() => {
+    const unwatchShowAlert = showAlertItem.watch((newValue) => {
+      setStorageState(prev => prev ? {...prev, showAlert: newValue} : undefined);
+    });
+    const unwatchProtectForm = protectFormItem.watch((newValue) => {
+      setStorageState(prev => prev ? {...prev, protectForm: newValue} : undefined);
+    });
+    const unwatchIgnoreList = ignoreListItem.watch((newValue) => {
+      setStorageState(prev => prev ? {...prev, ignoreList: newValue} : undefined);
+    });
+    return () => {
+      unwatchShowAlert();
+      unwatchProtectForm();
+      unwatchIgnoreList();
+    };
   }, []);
 
   // Turbo SPA遷移時にメタタグを再取得する
@@ -69,19 +94,21 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   }, []);
 
   const octolytics: Octolytics = useMemo<Octolytics>(() => {
-    const isLoaded = ignoreRepositoryRegExp !== undefined;
-    let needShowAlert = false;
+    const isLoaded = storageState !== undefined;
+    let showAlert = false;
+    let protectForm = false;
     if (isLoaded && metaOctolytics.repositoryIsPublic) {
-      needShowAlert = !ignoreRepositoryRegExp!.find(regexp => {
-        return regexp.test(metaOctolytics.repositoryName!)
-      })
+      const ignored = isIgnored(metaOctolytics.repositoryName!, storageState.ignoreList);
+      showAlert = storageState.showAlert && !ignored;
+      protectForm = storageState.protectForm && !ignored;
     }
     return {
       ...metaOctolytics,
-      needShowAlert,
+      showAlert,
+      protectForm,
       isLoaded,
     };
-  }, [metaOctolytics, ignoreRepositoryRegExp]);
+  }, [metaOctolytics, storageState]);
 
   return <OctolyticsContext.Provider value={octolytics}>
     {children}

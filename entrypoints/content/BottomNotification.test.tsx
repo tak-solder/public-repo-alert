@@ -3,12 +3,29 @@ import { render, screen, act, cleanup, fireEvent } from "@testing-library/react"
 import { BottomNotification } from "./BottomNotification";
 import { OctolyticsProvider } from "./octolytics";
 
-// loadConfig をモック
-vi.mock("@/utils/config", () => ({
-  loadConfig: vi.fn(),
-}));
-import { loadConfig } from "@/utils/config";
-const mockLoadConfig = vi.mocked(loadConfig);
+// storage をモック
+const mockShowAlertGetValue = vi.fn();
+const mockProtectFormGetValue = vi.fn();
+const mockIgnoreListGetValue = vi.fn();
+
+vi.mock("@/utils/storage", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utils/storage")>();
+  return {
+    showAlertItem: {
+      getValue: () => mockShowAlertGetValue(),
+      watch: () => () => {},
+    },
+    protectFormItem: {
+      getValue: () => mockProtectFormGetValue(),
+      watch: () => () => {},
+    },
+    ignoreListItem: {
+      getValue: () => mockIgnoreListGetValue(),
+      watch: () => () => {},
+    },
+    isIgnored: actual.isIgnored,
+  };
+});
 
 function setMetaTags(tags: Record<string, string>) {
   document
@@ -28,6 +45,12 @@ function clearMetaTags() {
     .forEach((el) => el.remove());
 }
 
+function setupDefaultStorage() {
+  mockShowAlertGetValue.mockResolvedValue(true);
+  mockProtectFormGetValue.mockResolvedValue(true);
+  mockIgnoreListGetValue.mockResolvedValue([]);
+}
+
 function renderWithProvider() {
   return render(
     <OctolyticsProvider>
@@ -38,7 +61,9 @@ function renderWithProvider() {
 
 describe("BottomNotification", () => {
   beforeEach(() => {
-    mockLoadConfig.mockReset();
+    mockShowAlertGetValue.mockReset();
+    mockProtectFormGetValue.mockReset();
+    mockIgnoreListGetValue.mockReset();
   });
 
   afterEach(() => {
@@ -46,12 +71,12 @@ describe("BottomNotification", () => {
     cleanup();
   });
 
-  it("needShowAlert が true の場合に通知が表示される", async () => {
+  it("showAlert が true の場合に通知が表示される", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
@@ -60,12 +85,12 @@ describe("BottomNotification", () => {
     expect(screen.getByText("This repository is public")).toBeInTheDocument();
   });
 
-  it("needShowAlert が false の場合に通知が表示されない", async () => {
+  it("showAlert が false の場合に通知が表示されない", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "false",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
@@ -81,7 +106,9 @@ describe("BottomNotification", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockReturnValue(new Promise(() => {}));
+    mockShowAlertGetValue.mockReturnValue(new Promise(() => {}));
+    mockProtectFormGetValue.mockReturnValue(new Promise(() => {}));
+    mockIgnoreListGetValue.mockReturnValue(new Promise(() => {}));
 
     await act(async () => {
       renderWithProvider();
@@ -97,7 +124,7 @@ describe("BottomNotification", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
@@ -119,13 +146,12 @@ describe("BottomNotification", () => {
       "octolytics-dimension-repository_nwo": "owner/repo-a",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
     });
 
-    // 閉じる
     await act(async () => {
       fireEvent.click(screen.getByLabelText("Close"));
     });
@@ -134,7 +160,6 @@ describe("BottomNotification", () => {
       screen.queryByText("This repository is public"),
     ).not.toBeInTheDocument();
 
-    // 別リポジトリに遷移
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo-b",
       "octolytics-dimension-repository_public": "true",
@@ -152,13 +177,12 @@ describe("BottomNotification", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
     });
 
-    // 閉じる
     await act(async () => {
       fireEvent.click(screen.getByLabelText("Close"));
     });
@@ -167,7 +191,6 @@ describe("BottomNotification", () => {
       screen.queryByText("This repository is public"),
     ).not.toBeInTheDocument();
 
-    // 同一リポジトリ内の遷移（repositoryName は同じ）
     await act(async () => {
       document.dispatchEvent(new Event("turbo:load"));
     });
@@ -182,24 +205,21 @@ describe("BottomNotification", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     await act(async () => {
       renderWithProvider();
     });
 
-    // 閉じる
     await act(async () => {
       fireEvent.click(screen.getByLabelText("Close"));
     });
 
-    // リポジトリ外ページに遷移
     clearMetaTags();
     await act(async () => {
       document.dispatchEvent(new Event("turbo:load"));
     });
 
-    // 同一リポジトリに戻る
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
@@ -208,7 +228,22 @@ describe("BottomNotification", () => {
       document.dispatchEvent(new Event("turbo:load"));
     });
 
-    // repositoryName が変更されたため再表示
+    expect(screen.getByText("This repository is public")).toBeInTheDocument();
+  });
+
+  it("protectForm が false でも showAlert が true なら通知が表示される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    mockShowAlertGetValue.mockResolvedValue(true);
+    mockProtectFormGetValue.mockResolvedValue(false);
+    mockIgnoreListGetValue.mockResolvedValue([]);
+
+    await act(async () => {
+      renderWithProvider();
+    });
+
     expect(screen.getByText("This repository is public")).toBeInTheDocument();
   });
 });

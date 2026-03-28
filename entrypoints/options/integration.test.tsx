@@ -1,11 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, act, cleanup, waitFor } from "@testing-library/react";
 import { fakeBrowser } from "wxt/testing";
-import { saveConfig } from "@/utils/config";
+import { ignoreListItem, showAlertItem, protectFormItem } from "@/utils/storage";
 import { OctolyticsProvider, useOctolytics } from "@/entrypoints/content/octolytics";
 import type { Octolytics } from "@/entrypoints/content/octolytics";
-
-// loadConfig をモックしない — 実際の chrome.storage.local（fakeBrowser）を経由する
 
 function setMetaTags(tags: Record<string, string>) {
   document
@@ -57,8 +55,8 @@ describe("統合テスト: 設定画面 → content script 反映", () => {
     fakeBrowser.reset();
   });
 
-  it("設定画面で保存した除外パターンがOctolyticsProviderで反映される", async () => {
-    await saveConfig({ ignoreRepositoryPatterns: ["owner/repo"] });
+  it("保存した除外リスト（完全一致）がOctolyticsProviderで反映される", async () => {
+    await ignoreListItem.setValue(["owner/repo"]);
 
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
@@ -69,11 +67,12 @@ describe("統合テスト: 設定画面 → content script 反映", () => {
     await renderAndWaitForLoad((v) => { result = v; });
 
     expect(result!.isLoaded).toBe(true);
-    expect(result!.needShowAlert).toBe(false);
+    expect(result!.showAlert).toBe(false);
+    expect(result!.protectForm).toBe(false);
   });
 
-  it("設定画面で除外パターンを空にした場合はアラートが表示される", async () => {
-    await saveConfig({ ignoreRepositoryPatterns: [] });
+  it("除外リストが空の場合はアラートが表示される", async () => {
+    await ignoreListItem.setValue([]);
 
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
@@ -84,11 +83,12 @@ describe("統合テスト: 設定画面 → content script 反映", () => {
     await renderAndWaitForLoad((v) => { result = v; });
 
     expect(result!.isLoaded).toBe(true);
-    expect(result!.needShowAlert).toBe(true);
+    expect(result!.showAlert).toBe(true);
+    expect(result!.protectForm).toBe(true);
   });
 
-  it("設定画面で保存した正規表現パターンがOctolyticsProviderで正しく評価される", async () => {
-    await saveConfig({ ignoreRepositoryPatterns: ["^owner/"] });
+  it("owner/*ワイルドカードパターンがOctolyticsProviderで正しく評価される", async () => {
+    await ignoreListItem.setValue(["owner/*"]);
 
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/any-repo",
@@ -99,11 +99,12 @@ describe("統合テスト: 設定画面 → content script 反映", () => {
     await renderAndWaitForLoad((v) => { result = v; });
 
     expect(result!.isLoaded).toBe(true);
-    expect(result!.needShowAlert).toBe(false);
+    expect(result!.showAlert).toBe(false);
+    expect(result!.protectForm).toBe(false);
   });
 
-  it("設定画面で保存したパターンに該当しないリポジトリではアラートが表示される", async () => {
-    await saveConfig({ ignoreRepositoryPatterns: ["owner/repo"] });
+  it("除外リストに該当しないリポジトリではアラートが表示される", async () => {
+    await ignoreListItem.setValue(["owner/repo"]);
 
     setMetaTags({
       "octolytics-dimension-repository_nwo": "other/repo",
@@ -114,6 +115,71 @@ describe("統合テスト: 設定画面 → content script 反映", () => {
     await renderAndWaitForLoad((v) => { result = v; });
 
     expect(result!.isLoaded).toBe(true);
-    expect(result!.needShowAlert).toBe(true);
+    expect(result!.showAlert).toBe(true);
+    expect(result!.protectForm).toBe(true);
+  });
+
+  it("storage.watch()でignoreListの変更がリアルタイムに反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+
+    let result: Octolytics | undefined;
+    await renderAndWaitForLoad((v) => { result = v; });
+
+    expect(result!.showAlert).toBe(true);
+    expect(result!.protectForm).toBe(true);
+
+    await act(async () => {
+      await ignoreListItem.setValue(["owner/repo"]);
+    });
+
+    await waitFor(() => {
+      expect(result!.showAlert).toBe(false);
+      expect(result!.protectForm).toBe(false);
+    });
+  });
+
+  it("storage.watch()でshowAlertItemの変更がリアルタイムに反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+
+    let result: Octolytics | undefined;
+    await renderAndWaitForLoad((v) => { result = v; });
+
+    expect(result!.showAlert).toBe(true);
+
+    await act(async () => {
+      await showAlertItem.setValue(false);
+    });
+
+    await waitFor(() => {
+      expect(result!.showAlert).toBe(false);
+      expect(result!.protectForm).toBe(true);
+    });
+  });
+
+  it("storage.watch()でprotectFormItemの変更がリアルタイムに反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+
+    let result: Octolytics | undefined;
+    await renderAndWaitForLoad((v) => { result = v; });
+
+    expect(result!.protectForm).toBe(true);
+
+    await act(async () => {
+      await protectFormItem.setValue(false);
+    });
+
+    await waitFor(() => {
+      expect(result!.protectForm).toBe(false);
+      expect(result!.showAlert).toBe(true);
+    });
   });
 });
