@@ -33,7 +33,7 @@ export const Setting: React.FC<Props> = ({ignoreList}) => {
           </FormControl.Label>
           <FormControl.Caption style={{fontSize: "medium"}}>
             Specify the repository where you want to disable this feature.<br/>
-            You can specify one per line. Use owner/* to match all repositories of an owner.
+            You can specify one per line. Use username/* to match all repositories of a user.
           </FormControl.Caption>
           <Textarea style={{height: '250px'}}
                     defaultValue={ignoreList.join("\n")}

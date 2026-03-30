@@ -97,8 +97,8 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
     const isLoaded = storageState !== undefined;
     let showAlert = false;
     let protectForm = false;
-    if (isLoaded && metaOctolytics.repositoryIsPublic) {
-      const ignored = isIgnored(metaOctolytics.repositoryName!, storageState.ignoreList);
+    if (isLoaded && metaOctolytics.repositoryIsPublic && metaOctolytics.repositoryName) {
+      const ignored = isIgnored(metaOctolytics.repositoryName, storageState.ignoreList);
       showAlert = storageState.showAlert && !ignored;
       protectForm = storageState.protectForm && !ignored;
     }
