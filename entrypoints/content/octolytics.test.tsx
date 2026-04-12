@@ -312,12 +312,10 @@ describe("OctolyticsProvider", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
+    // getValue()を未解決のまま保持（watch登録はgetValue()完了後のため呼ばれない）
     mockShowAlertGetValue.mockReturnValue(new Promise(() => {}));
     mockProtectFormGetValue.mockReturnValue(new Promise(() => {}));
     mockIgnoreListGetValue.mockReturnValue(new Promise(() => {}));
-    mockShowAlertWatch.mockReturnValue(() => {});
-    mockProtectFormWatch.mockReturnValue(() => {});
-    mockIgnoreListWatch.mockReturnValue(() => {});
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -331,6 +329,38 @@ describe("OctolyticsProvider", () => {
     expect(value!.isLoaded).toBe(false);
     expect(value!.showAlert).toBe(false);
     expect(value!.protectForm).toBe(false);
+  });
+
+  it("getValue()解決前にアンマウントした場合 watch が登録されない", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    // getValue()を未解決のまま保持
+    let resolveGetValue!: (value: boolean) => void;
+    mockShowAlertGetValue.mockReturnValue(new Promise((resolve) => { resolveGetValue = resolve; }));
+    mockProtectFormGetValue.mockReturnValue(new Promise(() => {}));
+    mockIgnoreListGetValue.mockReturnValue(new Promise(() => {}));
+
+    const { unmount } = await act(async () => {
+      return render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={() => {}} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    // getValue()解決前にアンマウント
+    unmount();
+
+    // Promise解決後も cancelled=true のため watch が登録されない
+    await act(async () => {
+      resolveGetValue(true);
+    });
+
+    expect(mockShowAlertWatch).not.toHaveBeenCalled();
+    expect(mockProtectFormWatch).not.toHaveBeenCalled();
+    expect(mockIgnoreListWatch).not.toHaveBeenCalled();
   });
 
   it("storage 読み込み後に isLoaded が true になる", async () => {
