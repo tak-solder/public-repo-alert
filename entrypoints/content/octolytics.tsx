@@ -1,5 +1,5 @@
 import {createContext, FC, ReactNode, useContext, useEffect, useMemo, useState} from "react";
-import {showAlertItem, protectFormItem, ignoreListItem, isIgnored} from "@/utils/storage";
+import {type StorageState, showAlertItem, protectFormItem, ignoreListItem, isIgnored} from "@/utils/storage";
 
 export type Octolytics = MetaOctolytics & {
   showAlert: boolean;
@@ -42,11 +42,6 @@ type Props = {
   children: ReactNode;
 }
 
-type StorageState = {
-  showAlert: boolean;
-  protectForm: boolean;
-  ignoreList: string[];
-} | undefined;
 
 export const OctolyticsProvider: FC<Props> = ({children}) => {
   const [metaOctolytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);

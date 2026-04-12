@@ -1,20 +1,25 @@
 import React, {useEffect, useState} from "react";
 import {ThemeProvider, BaseStyles} from '@primer/react'
-import {ignoreListItem} from "@/utils/storage";
+import {type StorageState, showAlertItem, protectFormItem, ignoreListItem} from "@/utils/storage";
 import {Setting} from "./Setting";
 
 export const App: React.FC = () => {
-  const [ignoreList, setIgnoreList] = useState<string[] | undefined>();
+  const [state, setState] = useState<StorageState | undefined>();
   useEffect(() => {
     (async () => {
-      setIgnoreList(await ignoreListItem.getValue())
+      const [showAlert, protectForm, ignoreList] = await Promise.all([
+        showAlertItem.getValue(),
+        protectFormItem.getValue(),
+        ignoreListItem.getValue(),
+      ]);
+      setState({showAlert, protectForm, ignoreList});
     })()
   }, []);
 
   return (
     <ThemeProvider>
       <BaseStyles>
-        {ignoreList !== undefined ? <Setting ignoreList={ignoreList} /> : null}
+        {state !== undefined ? <Setting {...state} /> : null}
       </BaseStyles>
     </ThemeProvider>
   );
