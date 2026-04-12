@@ -1,20 +1,20 @@
 import React, {useEffect, useState} from "react";
 import {ThemeProvider, BaseStyles} from '@primer/react'
-import {Config, loadConfig} from "@/utils/config";
+import {ignoreListItem} from "@/utils/storage";
 import {Setting} from "./Setting";
 
 export const App: React.FC = () => {
-  const [config, setConfig] = useState<Config | undefined>();
+  const [ignoreList, setIgnoreList] = useState<string[] | undefined>();
   useEffect(() => {
     (async () => {
-      setConfig(await loadConfig())
+      setIgnoreList(await ignoreListItem.getValue())
     })()
   }, []);
 
   return (
     <ThemeProvider>
       <BaseStyles>
-        {config ? <Setting config={config} /> : null}
+        {ignoreList !== undefined ? <Setting ignoreList={ignoreList} /> : null}
       </BaseStyles>
     </ThemeProvider>
   );

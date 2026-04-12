@@ -18,7 +18,7 @@ export const BottomNotification: FC = () => {
     }
   }, [octolytics.repositoryName, resetHidden]);
 
-  const needShow = !hidden && octolytics.needShowAlert;
+  const needShow = !hidden && octolytics.showAlert;
 
   useEffect(() => {
     const height = fixedDivRef.current?.clientHeight ?? 0;

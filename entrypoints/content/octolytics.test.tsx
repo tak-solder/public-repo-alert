@@ -3,20 +3,38 @@ import { render, act, cleanup } from "@testing-library/react";
 import { getMetaOctolytics, OctolyticsProvider, useOctolytics } from "./octolytics";
 import type { Octolytics } from "./octolytics";
 
-// loadConfig をモック
-vi.mock("@/utils/config", () => ({
-  loadConfig: vi.fn(),
-}));
-import { loadConfig } from "@/utils/config";
-const mockLoadConfig = vi.mocked(loadConfig);
+// storage をモック
+const mockShowAlertGetValue = vi.fn();
+const mockProtectFormGetValue = vi.fn();
+const mockIgnoreListGetValue = vi.fn();
+const mockShowAlertWatch = vi.fn();
+const mockProtectFormWatch = vi.fn();
+const mockIgnoreListWatch = vi.fn();
+
+vi.mock("@/utils/storage", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utils/storage")>();
+  return {
+    showAlertItem: {
+      getValue: () => mockShowAlertGetValue(),
+      watch: (cb: unknown) => mockShowAlertWatch(cb),
+    },
+    protectFormItem: {
+      getValue: () => mockProtectFormGetValue(),
+      watch: (cb: unknown) => mockProtectFormWatch(cb),
+    },
+    ignoreListItem: {
+      getValue: () => mockIgnoreListGetValue(),
+      watch: (cb: unknown) => mockIgnoreListWatch(cb),
+    },
+    isIgnored: actual.isIgnored,
+  };
+});
 
 // メタタグのセットアップヘルパー
 function setMetaTags(tags: Record<string, string>) {
-  // 既存の octolytics メタタグを削除
   document
     .querySelectorAll('meta[name*="octolytics-"]')
     .forEach((el) => el.remove());
-  // 新しいメタタグを追加
   for (const [name, content] of Object.entries(tags)) {
     const meta = document.createElement("meta");
     meta.setAttribute("name", name);
@@ -40,6 +58,15 @@ function OctolyticsConsumer({
   const octolytics = useOctolytics();
   onValue(octolytics);
   return null;
+}
+
+function setupDefaultStorage() {
+  mockShowAlertGetValue.mockResolvedValue(true);
+  mockProtectFormGetValue.mockResolvedValue(true);
+  mockIgnoreListGetValue.mockResolvedValue([]);
+  mockShowAlertWatch.mockReturnValue(() => {});
+  mockProtectFormWatch.mockReturnValue(() => {});
+  mockIgnoreListWatch.mockReturnValue(() => {});
 }
 
 describe("getMetaOctolytics", () => {
@@ -125,7 +152,12 @@ describe("getMetaOctolytics", () => {
 
 describe("OctolyticsProvider", () => {
   beforeEach(() => {
-    mockLoadConfig.mockReset();
+    mockShowAlertGetValue.mockReset();
+    mockProtectFormGetValue.mockReset();
+    mockIgnoreListGetValue.mockReset();
+    mockShowAlertWatch.mockReset();
+    mockProtectFormWatch.mockReset();
+    mockIgnoreListWatch.mockReset();
   });
 
   afterEach(() => {
@@ -133,12 +165,12 @@ describe("OctolyticsProvider", () => {
     cleanup();
   });
 
-  it("初期ロード時にメタタグから値を取得する", async () => {
+  it("初期ロード時にメタタグとstorage値を読み込む", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -152,7 +184,8 @@ describe("OctolyticsProvider", () => {
     expect(value).toEqual({
       repositoryName: "owner/repo",
       repositoryIsPublic: true,
-      needShowAlert: true,
+      showAlert: true,
+      protectForm: true,
       isLoaded: true,
     });
   });
@@ -162,7 +195,7 @@ describe("OctolyticsProvider", () => {
       "octolytics-dimension-repository_nwo": "owner/repo-a",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -175,7 +208,6 @@ describe("OctolyticsProvider", () => {
 
     expect(value!.repositoryName).toBe("owner/repo-a");
 
-    // メタタグを変更して turbo:load を発火
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo-b",
       "octolytics-dimension-repository_public": "true",
@@ -193,7 +225,7 @@ describe("OctolyticsProvider", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -204,7 +236,8 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(true);
+    expect(value!.showAlert).toBe(true);
+    expect(value!.protectForm).toBe(true);
 
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/private-repo",
@@ -215,7 +248,8 @@ describe("OctolyticsProvider", () => {
       document.dispatchEvent(new Event("turbo:load"));
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
   it("turbo:load イベントでリポジトリ外ページに遷移した場合", async () => {
@@ -223,7 +257,7 @@ describe("OctolyticsProvider", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -242,7 +276,8 @@ describe("OctolyticsProvider", () => {
 
     expect(value!.repositoryName).toBeUndefined();
     expect(value!.repositoryIsPublic).toBeUndefined();
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
   it("アンマウント時に turbo:load リスナーが解除される", async () => {
@@ -250,7 +285,7 @@ describe("OctolyticsProvider", () => {
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     const { unmount } = await act(async () => {
       return render(
@@ -262,7 +297,6 @@ describe("OctolyticsProvider", () => {
 
     unmount();
 
-    // アンマウント後に turbo:load を発火してもエラーにならない
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/other",
       "octolytics-dimension-repository_public": "true",
@@ -273,13 +307,15 @@ describe("OctolyticsProvider", () => {
     }).not.toThrow();
   });
 
-  it("config 読み込み前は isLoaded が false", async () => {
+  it("storage 読み込み前は isLoaded が false", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    // Promise を未解決のまま保持
-    mockLoadConfig.mockReturnValue(new Promise(() => {}));
+    // getValue()を未解決のまま保持（watch登録はgetValue()完了後のため呼ばれない）
+    mockShowAlertGetValue.mockReturnValue(new Promise(() => {}));
+    mockProtectFormGetValue.mockReturnValue(new Promise(() => {}));
+    mockIgnoreListGetValue.mockReturnValue(new Promise(() => {}));
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -291,15 +327,48 @@ describe("OctolyticsProvider", () => {
     });
 
     expect(value!.isLoaded).toBe(false);
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
-  it("config 読み込み後に isLoaded が true になる", async () => {
+  it("getValue()解決前にアンマウントした場合 watch が登録されない", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    // getValue()を未解決のまま保持
+    let resolveGetValue!: (value: boolean) => void;
+    mockShowAlertGetValue.mockReturnValue(new Promise((resolve) => { resolveGetValue = resolve; }));
+    mockProtectFormGetValue.mockReturnValue(new Promise(() => {}));
+    mockIgnoreListGetValue.mockReturnValue(new Promise(() => {}));
+
+    const { unmount } = await act(async () => {
+      return render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={() => {}} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    // getValue()解決前にアンマウント
+    unmount();
+
+    // Promise解決後も cancelled=true のため watch が登録されない
+    await act(async () => {
+      resolveGetValue(true);
+    });
+
+    expect(mockShowAlertWatch).not.toHaveBeenCalled();
+    expect(mockProtectFormWatch).not.toHaveBeenCalled();
+    expect(mockIgnoreListWatch).not.toHaveBeenCalled();
+  });
+
+  it("storage 読み込み後に isLoaded が true になる", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -313,14 +382,13 @@ describe("OctolyticsProvider", () => {
     expect(value!.isLoaded).toBe(true);
   });
 
-  it("パブリックリポジトリかつ除外パターンに該当しない場合 needShowAlert が true", async () => {
+  it("パブリックリポジトリかつ除外リストに該当しない場合 showAlert/protectForm が true", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({
-      ignoreRepositoryPatterns: ["other/.*"],
-    });
+    setupDefaultStorage();
+    mockIgnoreListGetValue.mockResolvedValue(["other/repo"]);
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -331,17 +399,17 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(true);
+    expect(value!.showAlert).toBe(true);
+    expect(value!.protectForm).toBe(true);
   });
 
-  it("パブリックリポジトリかつ除外パターンに該当する場合 needShowAlert が false", async () => {
+  it("パブリックリポジトリかつ除外リストに完全一致する場合 showAlert/protectForm が false", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({
-      ignoreRepositoryPatterns: ["owner/repo"],
-    });
+    setupDefaultStorage();
+    mockIgnoreListGetValue.mockResolvedValue(["owner/repo"]);
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -352,17 +420,17 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
-  it("除外パターンが大文字小文字を区別しない", async () => {
+  it("除外判定が大文字小文字を区別しない", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "Owner/Repo",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({
-      ignoreRepositoryPatterns: ["owner/repo"],
-    });
+    setupDefaultStorage();
+    mockIgnoreListGetValue.mockResolvedValue(["owner/repo"]);
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -373,15 +441,16 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
-  it("プライベートリポジトリの場合 needShowAlert が false", async () => {
+  it("プライベートリポジトリの場合 showAlert/protectForm が false", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
       "octolytics-dimension-repository_public": "false",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -392,14 +461,15 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
-  it("repositoryIsPublic が未定義の場合 needShowAlert が false", async () => {
+  it("repositoryIsPublic が未定義の場合 showAlert/protectForm が false", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "owner/repo",
     });
-    mockLoadConfig.mockResolvedValue({ ignoreRepositoryPatterns: [] });
+    setupDefaultStorage();
 
     let value: Octolytics | undefined;
     await act(async () => {
@@ -410,16 +480,84 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
   });
 
-  it("複数の除外パターンのいずれかに該当する場合 needShowAlert が false", async () => {
+  it("複数の除外パターンのいずれかに該当する場合 showAlert/protectForm が false", async () => {
     setMetaTags({
       "octolytics-dimension-repository_nwo": "org/lib",
       "octolytics-dimension-repository_public": "true",
     });
-    mockLoadConfig.mockResolvedValue({
-      ignoreRepositoryPatterns: ["owner/.*", "org/lib"],
+    setupDefaultStorage();
+    mockIgnoreListGetValue.mockResolvedValue(["owner/repo", "org/*"]);
+
+    let value: Octolytics | undefined;
+    await act(async () => {
+      render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={(v) => (value = v)} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
+  });
+
+  it("showAlertItem が false の場合 showAlert のみ false", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+    mockShowAlertGetValue.mockResolvedValue(false);
+
+    let value: Octolytics | undefined;
+    await act(async () => {
+      render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={(v) => (value = v)} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(true);
+  });
+
+  it("protectFormItem が false の場合 protectForm のみ false", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+    mockProtectFormGetValue.mockResolvedValue(false);
+
+    let value: Octolytics | undefined;
+    await act(async () => {
+      render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={(v) => (value = v)} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    expect(value!.showAlert).toBe(true);
+    expect(value!.protectForm).toBe(false);
+  });
+
+  it("storage.watch() で showAlertItem の変更が即時反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    let showAlertWatchCallback: ((newValue: boolean) => void) | undefined;
+    mockShowAlertWatch.mockImplementation((cb: (newValue: boolean) => void) => {
+      showAlertWatchCallback = cb;
+      return () => {};
     });
 
     let value: Octolytics | undefined;
@@ -431,6 +569,107 @@ describe("OctolyticsProvider", () => {
       );
     });
 
-    expect(value!.needShowAlert).toBe(false);
+    expect(value!.showAlert).toBe(true);
+
+    await act(async () => {
+      showAlertWatchCallback!(false);
+    });
+
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(true);
+  });
+
+  it("storage.watch() で protectFormItem の変更が即時反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    let protectFormWatchCallback: ((newValue: boolean) => void) | undefined;
+    mockProtectFormWatch.mockImplementation((cb: (newValue: boolean) => void) => {
+      protectFormWatchCallback = cb;
+      return () => {};
+    });
+
+    let value: Octolytics | undefined;
+    await act(async () => {
+      render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={(v) => (value = v)} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    expect(value!.protectForm).toBe(true);
+
+    await act(async () => {
+      protectFormWatchCallback!(false);
+    });
+
+    expect(value!.protectForm).toBe(false);
+    expect(value!.showAlert).toBe(true);
+  });
+
+  it("storage.watch() で ignoreListItem の変更が即時反映される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    let ignoreListWatchCallback: ((newValue: string[]) => void) | undefined;
+    mockIgnoreListWatch.mockImplementation((cb: (newValue: string[]) => void) => {
+      ignoreListWatchCallback = cb;
+      return () => {};
+    });
+
+    let value: Octolytics | undefined;
+    await act(async () => {
+      render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={(v) => (value = v)} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    expect(value!.showAlert).toBe(true);
+    expect(value!.protectForm).toBe(true);
+
+    await act(async () => {
+      ignoreListWatchCallback!(["owner/repo"]);
+    });
+
+    expect(value!.showAlert).toBe(false);
+    expect(value!.protectForm).toBe(false);
+  });
+
+  it("アンマウント時に storage.watch() が解除される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    const unwatchShowAlert = vi.fn();
+    const unwatchProtectForm = vi.fn();
+    const unwatchIgnoreList = vi.fn();
+    mockShowAlertWatch.mockReturnValue(unwatchShowAlert);
+    mockProtectFormWatch.mockReturnValue(unwatchProtectForm);
+    mockIgnoreListWatch.mockReturnValue(unwatchIgnoreList);
+
+    const { unmount } = await act(async () => {
+      return render(
+        <OctolyticsProvider>
+          <OctolyticsConsumer onValue={() => {}} />
+        </OctolyticsProvider>,
+      );
+    });
+
+    unmount();
+
+    expect(unwatchShowAlert).toHaveBeenCalled();
+    expect(unwatchProtectForm).toHaveBeenCalled();
+    expect(unwatchIgnoreList).toHaveBeenCalled();
   });
 });

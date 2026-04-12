@@ -1,22 +1,22 @@
 import React from "react";
 import {Button, FormControl, Heading, Textarea} from "@primer/react";
-import {Config, saveConfig} from "@/utils/config";
+import {ignoreListItem} from "@/utils/storage";
 
 type Props = {
-  config: Config;
+  ignoreList: string[];
 }
 
 const placeholder = `eg. username/repo-name
-^username/`;
+username/*`;
 
-export const Setting: React.FC<Props> = ({config}) => {
+export const Setting: React.FC<Props> = ({ignoreList}) => {
   const [saved, setSaved] = React.useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const textarea = e.currentTarget.querySelector<HTMLTextAreaElement>('textarea#ignore-repository-input');
     const value = textarea?.value || '';
-    const ignoreRepositoryPatterns = value.split(/(\r\n|\r|\n)/).map(v => v.trim()).filter(v => v);
-    await saveConfig({ignoreRepositoryPatterns})
+    const patterns = value.split(/(\r\n|\r|\n)/).map(v => v.trim()).filter(v => v);
+    await ignoreListItem.setValue(patterns);
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
@@ -33,10 +33,10 @@ export const Setting: React.FC<Props> = ({config}) => {
           </FormControl.Label>
           <FormControl.Caption style={{fontSize: "medium"}}>
             Specify the repository where you want to disable this feature.<br/>
-            You can specify one per line. Regular expressions can be used.
+            You can specify one per line. Use username/* to match all repositories of a user.
           </FormControl.Caption>
           <Textarea style={{height: '250px'}}
-                    defaultValue={config.ignoreRepositoryPatterns.join("\n")}
+                    defaultValue={ignoreList.join("\n")}
                     placeholder={placeholder}
                     block
           />
