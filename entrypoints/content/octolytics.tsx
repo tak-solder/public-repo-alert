@@ -52,33 +52,40 @@ export const OctolyticsProvider: FC<Props> = ({children}) => {
   const [metaOctolytics, setMetaOctolytics] = useState<MetaOctolytics>(getMetaOctolytics);
   const [storageState, setStorageState] = useState<StorageState>();
 
-  // storageから初期値を読み込む
+  // storageから初期値を読み込み、完了後にwatch()を登録する
+  // （初期ロード前にwatch callbackが発火して更新がドロップされるのを防ぐ）
   useEffect(() => {
+    let cancelled = false;
+    let unwatchFns: Array<() => void> = [];
+
     (async () => {
       const [showAlert, protectForm, ignoreList] = await Promise.all([
         showAlertItem.getValue(),
         protectFormItem.getValue(),
         ignoreListItem.getValue(),
       ]);
-      setStorageState({showAlert, protectForm, ignoreList});
-    })();
-  }, []);
 
-  // storage.watch()で変更を即時反映する
-  useEffect(() => {
-    const unwatchShowAlert = showAlertItem.watch((newValue) => {
-      setStorageState(prev => prev ? {...prev, showAlert: newValue} : undefined);
-    });
-    const unwatchProtectForm = protectFormItem.watch((newValue) => {
-      setStorageState(prev => prev ? {...prev, protectForm: newValue} : undefined);
-    });
-    const unwatchIgnoreList = ignoreListItem.watch((newValue) => {
-      setStorageState(prev => prev ? {...prev, ignoreList: newValue} : undefined);
-    });
+      // アンマウント後に状態更新・watch登録しない
+      if (cancelled) return;
+
+      setStorageState({showAlert, protectForm, ignoreList});
+
+      unwatchFns = [
+        showAlertItem.watch((newValue) => {
+          setStorageState(prev => prev ? {...prev, showAlert: newValue} : undefined);
+        }),
+        protectFormItem.watch((newValue) => {
+          setStorageState(prev => prev ? {...prev, protectForm: newValue} : undefined);
+        }),
+        ignoreListItem.watch((newValue) => {
+          setStorageState(prev => prev ? {...prev, ignoreList: newValue} : undefined);
+        }),
+      ];
+    })();
+
     return () => {
-      unwatchShowAlert();
-      unwatchProtectForm();
-      unwatchIgnoreList();
+      cancelled = true;
+      unwatchFns.forEach(fn => fn());
     };
   }, []);
 
