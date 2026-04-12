@@ -110,11 +110,12 @@ export const Setting: React.FC<Props> = ({showAlert: initialShowAlert, protectFo
         <div style={{padding: "16px 20px"}}>
           <form onSubmit={handleAddPattern}>
             <FormControl>
-              <FormControl.Label visuallyHidden>Add pattern</FormControl.Label>
+              <FormControl.Label htmlFor="add-pattern-input" visuallyHidden>Add pattern</FormControl.Label>
               <div style={{display: "flex", gap: 8}}>
                 <div style={{position: "relative", flex: 1}}>
                   <span style={{position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--fgColor-muted, #656d76)", pointerEvents: "none", display: "flex"}}><PlusIcon size={16} /></span>
                   <input
+                    id="add-pattern-input"
                     type="text"
                     placeholder="owner/repo or owner/*"
                     value={input}
