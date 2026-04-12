@@ -14,18 +14,12 @@ vi.mock("@/utils/storage", () => ({
     setValue: vi.fn(),
   },
 }));
-import { showAlertItem, protectFormItem, ignoreListItem } from "@/utils/storage";
+import { type StorageState, showAlertItem, protectFormItem, ignoreListItem } from "@/utils/storage";
 const mockShowAlertSetValue = vi.mocked(showAlertItem.setValue);
 const mockProtectFormSetValue = vi.mocked(protectFormItem.setValue);
 const mockIgnoreListSetValue = vi.mocked(ignoreListItem.setValue);
 
-type Props = {
-  showAlert?: boolean;
-  protectForm?: boolean;
-  ignoreList?: string[];
-};
-
-function renderSetting({showAlert = true, protectForm = true, ignoreList = []}: Props = {}) {
+function renderSetting({showAlert = true, protectForm = true, ignoreList = []}: Partial<StorageState> = {}) {
   return render(
     <ThemeProvider>
       <BaseStyles>
@@ -187,22 +181,22 @@ describe("Setting", () => {
     });
   });
 
+  function getInput() {
+    return screen.getByPlaceholderText("owner/repo or owner/*");
+  }
+
+  function getAddButton() {
+    return screen.getByRole("button", { name: "Add New" });
+  }
+
+  async function addPattern(value: string) {
+    fireEvent.change(getInput(), { target: { value } });
+    await act(async () => {
+      fireEvent.click(getAddButton());
+    });
+  }
+
   describe("\u9664\u5916\u30EA\u30B9\u30C8\u8FFD\u52A0", () => {
-    function getInput() {
-      return screen.getByPlaceholderText("owner/repo or owner/*");
-    }
-
-    function getAddButton() {
-      return screen.getByRole("button", { name: "Add New" });
-    }
-
-    async function addPattern(value: string) {
-      fireEvent.change(getInput(), { target: { value } });
-      await act(async () => {
-        fireEvent.click(getAddButton());
-      });
-    }
-
     it("owner/repo\u5F62\u5F0F\u306E\u30D1\u30BF\u30FC\u30F3\u3092\u8FFD\u52A0\u3067\u304D\u308B", async () => {
       renderSetting({ignoreList: ["existing/repo"]});
       await addPattern("new-owner/new-repo");
@@ -229,21 +223,6 @@ describe("Setting", () => {
   });
 
   describe("\u9664\u5916\u30EA\u30B9\u30C8\u8FFD\u52A0 \u30D0\u30EA\u30C7\u30FC\u30B7\u30E7\u30F3", () => {
-    function getInput() {
-      return screen.getByPlaceholderText("owner/repo or owner/*");
-    }
-
-    function getAddButton() {
-      return screen.getByRole("button", { name: "Add New" });
-    }
-
-    async function addPattern(value: string) {
-      fireEvent.change(getInput(), { target: { value } });
-      await act(async () => {
-        fireEvent.click(getAddButton());
-      });
-    }
-
     it("\u7A7A\u6587\u5B57\u306F\u8FFD\u52A0\u3067\u304D\u306A\u3044", async () => {
       renderSetting();
       await act(async () => {

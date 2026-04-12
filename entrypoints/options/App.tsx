@@ -1,13 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {ThemeProvider, BaseStyles} from '@primer/react'
-import {showAlertItem, protectFormItem, ignoreListItem} from "@/utils/storage";
+import {type StorageState, showAlertItem, protectFormItem, ignoreListItem} from "@/utils/storage";
 import {Setting} from "./Setting";
-
-type StorageState = {
-  showAlert: boolean;
-  protectForm: boolean;
-  ignoreList: string[];
-};
 
 export const App: React.FC = () => {
   const [state, setState] = useState<StorageState | undefined>();

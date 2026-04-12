@@ -1,13 +1,7 @@
 import React from "react";
 import {Flash, FormControl, Heading, ToggleSwitch} from "@primer/react";
 import {TrashIcon, MarkGithubIcon, PlusIcon} from "@primer/octicons-react";
-import {showAlertItem, protectFormItem, ignoreListItem} from "@/utils/storage";
-
-type Props = {
-  showAlert: boolean;
-  protectForm: boolean;
-  ignoreList: string[];
-};
+import {type StorageState, showAlertItem, protectFormItem, ignoreListItem} from "@/utils/storage";
 
 const REPO_URL = "https://github.com/tak-solder/public-repo-alert";
 
@@ -23,7 +17,7 @@ function validatePattern(value: string, currentList: string[]): string | null {
   return "";
 }
 
-export const Setting: React.FC<Props> = ({showAlert: initialShowAlert, protectForm: initialProtectForm, ignoreList: initialIgnoreList}) => {
+export const Setting: React.FC<StorageState> = ({showAlert: initialShowAlert, protectForm: initialProtectForm, ignoreList: initialIgnoreList}) => {
   const [showAlert, setShowAlert] = React.useState(initialShowAlert);
   const [protectForm, setProtectForm] = React.useState(initialProtectForm);
   const [ignoreList, setIgnoreList] = React.useState(initialIgnoreList);

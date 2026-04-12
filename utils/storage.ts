@@ -1,5 +1,12 @@
 import {storage} from "wxt/utils/storage";
 
+/** ストレージに保存される設定の型 */
+export type StorageState = {
+  showAlert: boolean;
+  protectForm: boolean;
+  ignoreList: string[];
+};
+
 /** アラート表示のON/OFF */
 export const showAlertItem = storage.defineItem<boolean>("local:showAlert", {
   fallback: true,
