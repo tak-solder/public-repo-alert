@@ -286,6 +286,20 @@ describe("Setting", () => {
       expect(screen.getByText(FORMAT_ERROR)).toBeInTheDocument();
     });
 
+    it("\u30B9\u30E9\u30C3\u30B7\u30E5\u304C\u8907\u6570\u542B\u307E\u308C\u308B\u30D1\u30BF\u30FC\u30F3\u306F\u8FFD\u52A0\u3067\u304D\u306A\u3044", async () => {
+      renderSetting();
+      await addPattern("owner/repo/extra");
+      expect(mockIgnoreListSetValue).not.toHaveBeenCalled();
+      expect(screen.getByText(FORMAT_ERROR)).toBeInTheDocument();
+    });
+
+    it("\u30EF\u30A4\u30EB\u30C9\u30AB\u30FC\u30C9\u304C\u672B\u5C3E\u306E/*\u3067\u306A\u3044\u30D1\u30BF\u30FC\u30F3\u306F\u8FFD\u52A0\u3067\u304D\u306A\u3044", async () => {
+      renderSetting();
+      await addPattern("owner/*foo");
+      expect(mockIgnoreListSetValue).not.toHaveBeenCalled();
+      expect(screen.getByText(FORMAT_ERROR)).toBeInTheDocument();
+    });
+
     it("\u91CD\u8907\u30D1\u30BF\u30FC\u30F3\u306F\u8FFD\u52A0\u3067\u304D\u306A\u3044\uFF08\u5B8C\u5168\u4E00\u81F4\uFF09", async () => {
       renderSetting({ignoreList: ["owner/repo"]});
       await addPattern("owner/repo");

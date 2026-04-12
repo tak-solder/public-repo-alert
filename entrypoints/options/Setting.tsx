@@ -14,8 +14,7 @@ const REPO_URL = "https://github.com/tak-solder/public-repo-alert";
 function validatePattern(value: string, currentList: string[]): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  const slashIndex = trimmed.indexOf("/");
-  if (slashIndex <= 0 || slashIndex >= trimmed.length - 1) {
+  if (!/^[^/]+\/(\*|[^/*]+)$/.test(trimmed)) {
     return "owner/repo または owner/* の形式で入力してください";
   }
   if (currentList.some(p => p.toLowerCase() === trimmed.toLowerCase())) {
