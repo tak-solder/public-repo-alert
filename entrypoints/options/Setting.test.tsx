@@ -35,8 +35,8 @@ function renderSetting({showAlert = true, protectForm = true, ignoreList = []}: 
   );
 }
 
-const FORMAT_ERROR = "owner/repo \u307E\u305F\u306F owner/* \u306E\u5F62\u5F0F\u3067\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044";
-const DUPLICATE_ERROR = "\u3053\u306E\u30D1\u30BF\u30FC\u30F3\u306F\u65E2\u306B\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u3059";
+const FORMAT_ERROR = "Please enter in owner/repo or owner/* format.";
+const DUPLICATE_ERROR = "This pattern is already registered.";
 
 describe("Setting", () => {
   beforeEach(() => {
@@ -66,25 +66,25 @@ describe("Setting", () => {
 
     it("\u30A2\u30E9\u30FC\u30C8\u8868\u793A\u30C8\u30B0\u30EB\u304CON\u72B6\u614B\u3067\u8868\u793A\u3055\u308C\u308B", () => {
       renderSetting({showAlert: true});
-      const toggle = screen.getByLabelText("\u30A2\u30E9\u30FC\u30C8\u8868\u793A");
+      const toggle = screen.getByLabelText("Show Alert");
       expect(toggle).toHaveAttribute("aria-pressed", "true");
     });
 
     it("\u30A2\u30E9\u30FC\u30C8\u8868\u793A\u30C8\u30B0\u30EB\u304COFF\u72B6\u614B\u3067\u8868\u793A\u3055\u308C\u308B", () => {
       renderSetting({showAlert: false});
-      const toggle = screen.getByLabelText("\u30A2\u30E9\u30FC\u30C8\u8868\u793A");
+      const toggle = screen.getByLabelText("Show Alert");
       expect(toggle).toHaveAttribute("aria-pressed", "false");
     });
 
     it("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77\u30C8\u30B0\u30EB\u304CON\u72B6\u614B\u3067\u8868\u793A\u3055\u308C\u308B", () => {
       renderSetting({protectForm: true});
-      const toggle = screen.getByLabelText("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77");
+      const toggle = screen.getByLabelText("Protect Form");
       expect(toggle).toHaveAttribute("aria-pressed", "true");
     });
 
     it("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77\u30C8\u30B0\u30EB\u304COFF\u72B6\u614B\u3067\u8868\u793A\u3055\u308C\u308B", () => {
       renderSetting({protectForm: false});
-      const toggle = screen.getByLabelText("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77");
+      const toggle = screen.getByLabelText("Protect Form");
       expect(toggle).toHaveAttribute("aria-pressed", "false");
     });
 
@@ -113,7 +113,7 @@ describe("Setting", () => {
   describe("\u30C8\u30B0\u30EB\u64CD\u4F5C", () => {
     it("\u30A2\u30E9\u30FC\u30C8\u8868\u793A\u3092ON\u304B\u3089OFF\u306B\u5207\u308A\u66FF\u3048\u308B\u3068storage\u306B\u5373\u6642\u53CD\u6620\u3055\u308C\u308B", async () => {
       renderSetting({showAlert: true});
-      const toggle = screen.getByLabelText("\u30A2\u30E9\u30FC\u30C8\u8868\u793A");
+      const toggle = screen.getByLabelText("Show Alert");
       await act(async () => {
         fireEvent.click(toggle);
       });
@@ -122,7 +122,7 @@ describe("Setting", () => {
 
     it("\u30A2\u30E9\u30FC\u30C8\u8868\u793A\u3092OFF\u304B\u3089ON\u306B\u5207\u308A\u66FF\u3048\u308B\u3068storage\u306B\u5373\u6642\u53CD\u6620\u3055\u308C\u308B", async () => {
       renderSetting({showAlert: false});
-      const toggle = screen.getByLabelText("\u30A2\u30E9\u30FC\u30C8\u8868\u793A");
+      const toggle = screen.getByLabelText("Show Alert");
       await act(async () => {
         fireEvent.click(toggle);
       });
@@ -131,7 +131,7 @@ describe("Setting", () => {
 
     it("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77\u3092ON\u304B\u3089OFF\u306B\u5207\u308A\u66FF\u3048\u308B\u3068storage\u306B\u5373\u6642\u53CD\u6620\u3055\u308C\u308B", async () => {
       renderSetting({protectForm: true});
-      const toggle = screen.getByLabelText("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77");
+      const toggle = screen.getByLabelText("Protect Form");
       await act(async () => {
         fireEvent.click(toggle);
       });
@@ -140,7 +140,7 @@ describe("Setting", () => {
 
     it("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77\u3092OFF\u304B\u3089ON\u306B\u5207\u308A\u66FF\u3048\u308B\u3068storage\u306B\u5373\u6642\u53CD\u6620\u3055\u308C\u308B", async () => {
       renderSetting({protectForm: false});
-      const toggle = screen.getByLabelText("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77");
+      const toggle = screen.getByLabelText("Protect Form");
       await act(async () => {
         fireEvent.click(toggle);
       });
@@ -151,7 +151,7 @@ describe("Setting", () => {
   describe("\u9664\u5916\u30EA\u30B9\u30C8\u524A\u9664", () => {
     it("\u4E2D\u9593\u306E\u9805\u76EE\u3092\u524A\u9664\u3067\u304D\u308B", async () => {
       renderSetting({ignoreList: ["owner/repo-a", "org/*", "user/repo-b"]});
-      const deleteButton = screen.getByRole("button", { name: "org/* \u3092\u524A\u9664" });
+      const deleteButton = screen.getByRole("button", { name: "Delete org/*" });
       await act(async () => {
         fireEvent.click(deleteButton);
       });
@@ -160,7 +160,7 @@ describe("Setting", () => {
 
     it("\u5148\u982D\u306E\u9805\u76EE\u3092\u524A\u9664\u3067\u304D\u308B", async () => {
       renderSetting({ignoreList: ["owner/repo-a", "org/*"]});
-      const deleteButton = screen.getByRole("button", { name: "owner/repo-a \u3092\u524A\u9664" });
+      const deleteButton = screen.getByRole("button", { name: "Delete owner/repo-a" });
       await act(async () => {
         fireEvent.click(deleteButton);
       });
@@ -169,7 +169,7 @@ describe("Setting", () => {
 
     it("\u6700\u5F8C\u306E1\u4EF6\u3092\u524A\u9664\u3067\u304D\u308B", async () => {
       renderSetting({ignoreList: ["owner/repo-a"]});
-      const deleteButton = screen.getByRole("button", { name: "owner/repo-a \u3092\u524A\u9664" });
+      const deleteButton = screen.getByRole("button", { name: "Delete owner/repo-a" });
       await act(async () => {
         fireEvent.click(deleteButton);
       });
@@ -178,7 +178,7 @@ describe("Setting", () => {
 
     it("\u524A\u9664\u5F8C\u306BUI\u304B\u3089\u8A72\u5F53\u9805\u76EE\u304C\u6D88\u3048\u308B", async () => {
       renderSetting({ignoreList: ["owner/repo-a", "org/*"]});
-      const deleteButton = screen.getByRole("button", { name: "owner/repo-a \u3092\u524A\u9664" });
+      const deleteButton = screen.getByRole("button", { name: "Delete owner/repo-a" });
       await act(async () => {
         fireEvent.click(deleteButton);
       });
@@ -189,11 +189,11 @@ describe("Setting", () => {
 
   describe("\u9664\u5916\u30EA\u30B9\u30C8\u8FFD\u52A0", () => {
     function getInput() {
-      return screen.getByPlaceholderText("owner/repo");
+      return screen.getByPlaceholderText("owner/repo or owner/*");
     }
 
     function getAddButton() {
-      return screen.getByRole("button", { name: "\u8FFD\u52A0" });
+      return screen.getByRole("button", { name: "Add New" });
     }
 
     async function addPattern(value: string) {
@@ -230,11 +230,11 @@ describe("Setting", () => {
 
   describe("\u9664\u5916\u30EA\u30B9\u30C8\u8FFD\u52A0 \u30D0\u30EA\u30C7\u30FC\u30B7\u30E7\u30F3", () => {
     function getInput() {
-      return screen.getByPlaceholderText("owner/repo");
+      return screen.getByPlaceholderText("owner/repo or owner/*");
     }
 
     function getAddButton() {
-      return screen.getByRole("button", { name: "\u8FFD\u52A0" });
+      return screen.getByRole("button", { name: "Add New" });
     }
 
     async function addPattern(value: string) {

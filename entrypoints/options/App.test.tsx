@@ -62,7 +62,7 @@ describe("App", () => {
     render(<App />);
 
     await screen.findByRole("heading", { name: "Public repo Alert Settings" });
-    const toggle = screen.getByLabelText("\u30A2\u30E9\u30FC\u30C8\u8868\u793A");
+    const toggle = screen.getByLabelText("Show Alert");
     expect(toggle).toHaveAttribute("aria-pressed", "false");
   });
 
@@ -74,7 +74,7 @@ describe("App", () => {
     render(<App />);
 
     await screen.findByRole("heading", { name: "Public repo Alert Settings" });
-    const toggle = screen.getByLabelText("\u30D5\u30A9\u30FC\u30E0\u4FDD\u8B77");
+    const toggle = screen.getByLabelText("Protect Form");
     expect(toggle).toHaveAttribute("aria-pressed", "false");
   });
 
