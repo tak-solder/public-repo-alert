@@ -7,23 +7,28 @@ import { OctolyticsProvider } from "./octolytics";
 const mockShowAlertGetValue = vi.fn();
 const mockProtectFormGetValue = vi.fn();
 const mockIgnoreListGetValue = vi.fn();
+const mockShowAlertWatch = vi.fn();
+const mockProtectFormWatch = vi.fn();
+const mockIgnoreListWatch = vi.fn();
+const mockAddIgnorePattern = vi.fn();
 
 vi.mock("@/utils/storage", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/utils/storage")>();
   return {
     showAlertItem: {
       getValue: () => mockShowAlertGetValue(),
-      watch: () => () => {},
+      watch: (cb: unknown) => mockShowAlertWatch(cb),
     },
     protectFormItem: {
       getValue: () => mockProtectFormGetValue(),
-      watch: () => () => {},
+      watch: (cb: unknown) => mockProtectFormWatch(cb),
     },
     ignoreListItem: {
       getValue: () => mockIgnoreListGetValue(),
-      watch: () => () => {},
+      watch: (cb: unknown) => mockIgnoreListWatch(cb),
     },
     isIgnored: actual.isIgnored,
+    addIgnorePattern: (...args: unknown[]) => mockAddIgnorePattern(...args),
   };
 });
 
@@ -49,6 +54,7 @@ function setupDefaultStorage() {
   mockShowAlertGetValue.mockResolvedValue(true);
   mockProtectFormGetValue.mockResolvedValue(true);
   mockIgnoreListGetValue.mockResolvedValue([]);
+  mockAddIgnorePattern.mockResolvedValue(true);
 }
 
 function renderWithProvider() {
@@ -64,6 +70,13 @@ describe("BottomNotification", () => {
     mockShowAlertGetValue.mockReset();
     mockProtectFormGetValue.mockReset();
     mockIgnoreListGetValue.mockReset();
+    mockShowAlertWatch.mockReset();
+    mockProtectFormWatch.mockReset();
+    mockIgnoreListWatch.mockReset();
+    mockAddIgnorePattern.mockReset();
+    mockShowAlertWatch.mockReturnValue(() => {});
+    mockProtectFormWatch.mockReturnValue(() => {});
+    mockIgnoreListWatch.mockReturnValue(() => {});
   });
 
   afterEach(() => {
@@ -229,6 +242,94 @@ describe("BottomNotification", () => {
     });
 
     expect(screen.getByText("This repository is public")).toBeInTheDocument();
+  });
+
+  it("アラートバー内に IgnoreMenu が表示される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    await act(async () => {
+      renderWithProvider();
+    });
+
+    expect(screen.getByLabelText("Ignore options")).toBeInTheDocument();
+  });
+
+  it("IgnoreMenu に正しい repositoryName が渡される", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "my-org/my-repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    await act(async () => {
+      renderWithProvider();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText("Ignore options"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Ignore this repository"));
+    });
+
+    expect(mockAddIgnorePattern).toHaveBeenCalledWith("my-org/my-repo");
+  });
+
+  it("除外登録後にアラートが即座に非表示になる（owner/repo）", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    let ignoreListWatchCallback: ((newValue: string[]) => void) | undefined;
+    mockIgnoreListWatch.mockImplementation((cb: (newValue: string[]) => void) => {
+      ignoreListWatchCallback = cb;
+      return () => {};
+    });
+
+    await act(async () => {
+      renderWithProvider();
+    });
+
+    expect(screen.getByText("This repository is public")).toBeInTheDocument();
+
+    await act(async () => {
+      ignoreListWatchCallback!(["owner/repo"]);
+    });
+
+    expect(screen.queryByText("This repository is public")).not.toBeInTheDocument();
+  });
+
+  it("除外登録後にアラートが即座に非表示になる（owner/*）", async () => {
+    setMetaTags({
+      "octolytics-dimension-repository_nwo": "owner/repo",
+      "octolytics-dimension-repository_public": "true",
+    });
+    setupDefaultStorage();
+
+    let ignoreListWatchCallback: ((newValue: string[]) => void) | undefined;
+    mockIgnoreListWatch.mockImplementation((cb: (newValue: string[]) => void) => {
+      ignoreListWatchCallback = cb;
+      return () => {};
+    });
+
+    await act(async () => {
+      renderWithProvider();
+    });
+
+    expect(screen.getByText("This repository is public")).toBeInTheDocument();
+
+    await act(async () => {
+      ignoreListWatchCallback!(["owner/*"]);
+    });
+
+    expect(screen.queryByText("This repository is public")).not.toBeInTheDocument();
   });
 
   it("protectForm が false でも showAlert が true なら通知が表示される", async () => {
