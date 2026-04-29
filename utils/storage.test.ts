@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest";
 import {isIgnored, addIgnorePattern, ignoreListItem} from "./storage";
 
 describe("isIgnored", () => {
@@ -63,6 +63,10 @@ describe("addIgnorePattern", () => {
     mockSetValue.mockResolvedValue(undefined);
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("空の除外リストに owner/repo 形式のパターンを追加する", async () => {
     mockGetValue.mockResolvedValue([]);
     const result = await addIgnorePattern("owner/repo");
@@ -117,5 +121,26 @@ describe("addIgnorePattern", () => {
     const result = await addIgnorePattern("beta/repo");
     expect(result).toBe(true);
     expect(mockSetValue).toHaveBeenCalledWith(["alpha/repo", "beta/repo"]);
+  });
+
+  it("前後の空白をトリムして保存する", async () => {
+    mockGetValue.mockResolvedValue([]);
+    const result = await addIgnorePattern("  owner/repo  ");
+    expect(result).toBe(true);
+    expect(mockSetValue).toHaveBeenCalledWith(["owner/repo"]);
+  });
+
+  it("形式不正のパターンは追加しない", async () => {
+    const result = await addIgnorePattern("owner");
+    expect(result).toBe(false);
+    expect(mockGetValue).not.toHaveBeenCalled();
+    expect(mockSetValue).not.toHaveBeenCalled();
+  });
+
+  it("空白のみのパターンは追加しない", async () => {
+    const result = await addIgnorePattern("   ");
+    expect(result).toBe(false);
+    expect(mockGetValue).not.toHaveBeenCalled();
+    expect(mockSetValue).not.toHaveBeenCalled();
   });
 });
