@@ -22,6 +22,17 @@ export const ignoreListItem = storage.defineItem<string[]>("local:ignoreList", {
   fallback: [],
 });
 
+/**
+ * 除外リストにパターンを追加する（既にカバーされている場合は何もしない）
+ * @returns 追加されたかどうか
+ */
+export const addIgnorePattern = async (pattern: string): Promise<boolean> => {
+  const current = await ignoreListItem.getValue();
+  if (isIgnored(pattern, current)) return false;
+  await ignoreListItem.setValue([...current, pattern]);
+  return true;
+};
+
 /** 除外判定（完全一致 + owner/*ワイルドカード、大文字小文字を区別しない） */
 export const isIgnored = (repositoryName: string, ignoreList: string[]): boolean => {
   const repoLower = repositoryName.toLowerCase();

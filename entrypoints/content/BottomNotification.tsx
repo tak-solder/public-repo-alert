@@ -1,6 +1,7 @@
 import {FC, useEffect, useRef, useState} from "react";
 import {useBoolean} from "@/hooks/useBoolean";
 import {useOctolytics} from "./octolytics";
+import {IgnoreMenu} from "./IgnoreMenu";
 
 export const BottomNotification: FC = () => {
   const [hidden, {setTrue: handleCloseButton, setFalse: resetHidden}] = useBoolean(false)
@@ -35,6 +36,9 @@ export const BottomNotification: FC = () => {
       <div className="position-fixed bottom-0 width-full" ref={fixedDivRef}>
         <div className="flash flash-error flash-full border-bottom-0 text-center text-bold py-2">
           <div className="flash-action d-flex flex-items-center">
+            {octolytics.repositoryName && (
+              <IgnoreMenu repositoryName={octolytics.repositoryName} />
+            )}
             <button className="flash-close Button Button--iconOnly Button--invisible Button--medium" type="submit"
                     aria-label="Close" onClick={handleCloseButton}>
               {/* https://primer.style/foundations/icons/x-16 */}
